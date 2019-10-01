@@ -1,9 +1,9 @@
 # Timelog
 
-* PROJECT NAME
-* YOUR NAME
-* STUDENT_ID
-* SUPERVISOR NAME
+* The IETF Transport Services API
+* Stuart Reilly	
+* 2258082
+* Dr Colin Perkins
 
 ## Guidance
 
@@ -14,13 +14,7 @@
 
 ## Week 1
 
-### 19 Oct 2019
+### 25 Sept 2019
 
-* *4 hours* Read the project guidance notes
-* *0.5 hour* Created GitLab repository and cloned the cookiecutter for the projects
-* *1 hour* Modified dissertation template, compiled  
-
-## 20 Oct 2019
-
-* *1 hour* meeting with supervisor
-* *2 hours* writing initial version of test harness
+* *1 hour* Initialise repo with project template and setup reference manager
+* *3 hours* Read up on the current state of async Rust

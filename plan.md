@@ -1,16 +1,14 @@
 # Plan
 
-* PROJECT TITLE
-* YOUR NAME
-* STUDENT ID
-* SUPERVISOR NAME
-
-Week-by-week plan for the whole project. Update this as you go along.
+* The IETF Transport Services
+* Stuart Reilly
+* 2258082
+* Dr Colin Perkins
 
 ## Winter semester
 
-* **Week 1**
-* **Week 2**
+* **Week 1** Setup repository and continue background reading
+* **Week 2** Consolidate background reading and define project requirements
 * **Week 3**
 * **Week 4**
 * **Week 5**
