@@ -18,3 +18,12 @@
 
 * *1 hour* Initialise repo with project template and setup reference manager
 * *3 hours* Read up on the current state of async Rust
+
+## Week 2
+
+## 1 Oct 2019
+
+* *3 hours* Read IETF taps interface draft
+
+## 2 Oct 2019
+* *1 hour* Read last year's dissertation
