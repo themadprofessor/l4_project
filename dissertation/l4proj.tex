@@ -11,21 +11,21 @@
 
 %==============================================================================
 %% METADATA
-\title{Level 4 Project Report Template}
-\author{John H. Williamson}
-\date{September 14, 2018}
+\title{The IETF Transport Service API}
+\author{Stuart Reilly}
+\date{\today}
 
 \maketitle
 
 %==============================================================================
 %% ABSTRACT
 \begin{abstract}
-    Every abstract follows a similar pattern. Motivate; set aims; describe work; explain results.
-    \vskip 0.5em
-    ``XYZ is bad. This project investigated ABC to determine if it was better. 
-    ABC used XXX and YYY to implement ZZZ. This is particularly interesting as XXX and YYY have
-    never been used together. It was found that  
-    ABC was 20\% better than XYZ, though it caused rabies in half of subjects.''
+    Network programming has been build around the Berkeley Sockets API since its inception in 1983.
+    While the simplicity of this API, which abstracted file I/O and network I/O to a similar interface,
+    is a testament to its longevity, modern network programming has changed in a manner which requires
+    amounts of boilerplate code.
+    This projects aims to investigate the possibility of a high-level API which removes the boilerplate
+    associated with Berkeley sockets, and provide a protocol-agnostic, asynchronous API to application developers.
 \end{abstract}
 
 %==============================================================================
@@ -39,8 +39,8 @@
 % Please note that you are under no obligation to sign 
 % this declaration, but doing so would help future students.
 %
-%\def\consentname {My Name} % your full name
-%\def\consentdate {20 March 2018} % the date you agree
+\def\consentname {Stuart Reilly} % your full name
+\def\consentdate {\today} % the date you agree
 %
 \educationalconsent
 
@@ -79,6 +79,38 @@
 
 % reset page numbering. Don't remove this!
 \pagenumbering{arabic} 
+
+The Berkeley socket API (BSD sockets) allows an application to communicate over the Internet since 1983.
+A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has been created.
+This allows a programmer with understanding of local file I/O to work with network sockets.
+While this model of network I/O has some similarities to local file I/O, in reality they are distinct and should be treated as such.
+One prime example of this is how network I/O has a range of protocols which can be used at each layer of the networking stack,
+each providing different grantees and properties, and the application must specify which protocol stack to use.
+Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not need to
+manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
+
+Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application to be modified.
+This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6 rather than 
+only the network implementation.
+BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
+While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the development of 
+alternative protocols such as DCCP and SCTP.
+
+Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O.
+Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous API.
+An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better performance.
+
+In order to resolve the above issues, a new networking API must be created.
+Such an API must be protocol-agnostic and asynchronous, while allowing not reducing the possible uses of the API in comparison to
+BSD sockets.
+By being protocol-agnostic, the API decouples applications from the transport-layer, allowing new protocols to be designed and used
+without applications having to be modified.
+Modern network programming relies on asynchronous networking, which previously would require boilerplate over BSD sockets.
+By having the API be asynchronous, this boilerplate can be removed.
+
+The aim of this project is to create an API which fulfills these requirements, and evaluate it in comparison to BSD sockets.
+The IETF Transport Services API will provide the overall design of the API, and Rust will be the implementation language used.
+Rust provides high-level safety with low-level performance and access, while also having be designed with concurrent programming in mind.
 
 
 Why should the reader care about what are you doing and what are you actually doing?

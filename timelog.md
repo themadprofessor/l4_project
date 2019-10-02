@@ -27,3 +27,4 @@
 
 ## 2 Oct 2019
 * *1 hour* Read last year's dissertation
+* *1.5 hour* Write draft introduction
