@@ -27,4 +27,11 @@
 
 ## 2 Oct 2019
 * *1 hour* Read last year's dissertation
-* *1.5 hour* Write draft introduction
+* *1.5 hours* Write draft introduction
+
+## 5 Oct 2019
+* *1 hour* Read IETF meetings' minutes and slides
+* *2 hours* Read some more of last year's dissertation and reasoned potential uses of tokio
+
+## 7 Oct 2019
+* *0.5 hours* Continue reading last year's dissertation
