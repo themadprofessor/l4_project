@@ -21,17 +21,27 @@
 
 ## Week 2
 
-## 1 Oct 2019
+### 1 Oct 2019
 
 * *3 hours* Read IETF taps interface draft
 
-## 2 Oct 2019
+### 2 Oct 2019
 * *1 hour* Read last year's dissertation
 * *1.5 hours* Write draft introduction
 
-## 5 Oct 2019
+### 5 Oct 2019
 * *1 hour* Read IETF meetings' minutes and slides
 * *2 hours* Read some more of last year's dissertation and reasoned potential uses of tokio
 
-## 7 Oct 2019
-* *0.5 hours* Continue reading last year's dissertation
+## Week 3
+
+### 7 Oct 2019
+* *1 hour* Finish reading last year's dissertation
+
+### 8 Oct 2019
+* *0.5 hours* Add summaries of completed readings to ref manager
+* *0.5 hours* Read Post Sockets
+
+### 9 Oct 2019
+* *2 hours* Read NEAT and Post Sockets
+* *3 hours* Attempt to implement preconnections as a generics-based state machine
