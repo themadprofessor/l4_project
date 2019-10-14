@@ -45,3 +45,12 @@
 ### 9 Oct 2019
 * *2 hours* Read NEAT and Post Sockets
 * *3 hours* Attempt to implement preconnections as a generics-based state machine
+
+### 12 Oct 2019
+* *2 hours* Continue with preconnection generics-based state machine
+
+### 13 Oct 2019
+* *3 hours* Start defining transport properties types
+
+### 14 Oct 2019
+* *2 hours* Define transport properties api and document
