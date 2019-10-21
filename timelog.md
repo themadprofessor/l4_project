@@ -54,3 +54,9 @@
 
 ### 14 Oct 2019
 * *2 hours* Define transport properties api and document
+
+### 16 Oct 2019
+* *3 hours* Remove some transport properties and implement direction separately.
+
+### 17 Oct 2019
+* *2 hours* Begin defining main flow of api and minimum viable product.
