@@ -203,6 +203,45 @@ What did other people do, and how is it relevant to what you want to do?
 %==================================================================================================================================
 \chapter{Analysis/Requirements}
 What is the problem that you want to solve, and how did you arrive at it?
+
+In this chapter we define a set of functional and non-functional requirements, splitting each into ''required'' and ''optional''.
+These requirements must fulfill the aims outlined in Chapter 1 and are intended to be built upon and make use of the prior research
+discussed in Chapter 2.
+
+\section{Functional Requirements}
+
+\subsection{Required}
+
+\begin{itemize}
+	\item Provide an API which can support a simple single-client and single-server example
+	\item Provide an asynchronous, API utilising futures
+	\item Expose a simple Preconnection object, which can initiate a connection or begin listening for connections
+	\item Expose a simple Connection object, which can send and receive typed data
+\end{itemize}
+
+\subsection{Optional}
+
+\begin{itemize}
+	\item Provide a message framing mechanism
+	\item Expose a Preconnection object, which can only initiate or begin listening if a remote or local endpoint is given, respectively
+	\item Expose a Connection object, which can receive partial data
+\end{itemize}
+
+\section{Non-Functional Requirements}
+
+\subsection{Required}
+
+\begin{itemize}
+	\item Provide a simple "self-documenting" API (should be easy to understand uses of API at glance)
+	\item Allow applications to provide their own types to be sent (i.e. Serde support)
+\end{itemize}
+
+\subsection{Optional}
+
+\begin{itemize}
+	\item Provide a minimal performance impact over raw BSD sockets (to be expected with a higher level API)
+\end{itemize}
+
 \section{Guidance}
 Make it clear how you derived the constrained form of your problem via a clear and logical process. 
 

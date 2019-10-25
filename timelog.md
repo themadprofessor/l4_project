@@ -52,6 +52,8 @@
 ### 13 Oct 2019
 * *3 hours* Start defining transport properties types
 
+## Week 4
+
 ### 14 Oct 2019
 * *2 hours* Define transport properties api and document
 
@@ -60,3 +62,8 @@
 
 ### 17 Oct 2019
 * *2 hours* Begin defining main flow of api and minimum viable product.
+
+## Week 5
+
+### 22 Oct 2019
+* *2 hours* Begin outlining requirements
