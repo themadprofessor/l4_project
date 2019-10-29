@@ -67,3 +67,8 @@
 
 ### 22 Oct 2019
 * *2 hours* Begin outlining requirements
+
+### Week 6
+
+### 29 Oct 2019
+* *1 hours* Expand on outlined requirements
