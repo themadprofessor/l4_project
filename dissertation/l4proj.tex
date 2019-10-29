@@ -212,6 +212,15 @@ discussed in Chapter 2.
 
 \subsection{Required}
 
+The API must provide enough functionality to support a single-client and single-server example.
+This is required, because this is a minimum requirement to be able to be a basic replacement for BSD sockets.
+Furthermore, most network communication occur this style, and the remaining can be recreated using this style.
+
+The API must be asynchronous, utilising futures as the mechanism of handling asynchronous events.
+This is required, because one the main issues with BSD sockets discussed in chapter 1 was its synchronous nature.
+Asynchronous network programming is the modern technique, as such must be the primary method of using a new networking API.
+Futures are the de facto standard method for asynchronous programming in Rust, as such they shall be used.
+
 \begin{itemize}
 	\item Provide an API which can support a simple single-client and single-server example
 	\item Provide an asynchronous, API utilising futures
