@@ -71,4 +71,13 @@
 ### Week 6
 
 ### 29 Oct 2019
-* *1 hours* Expand on outlined requirements
+* *1 hour* Expand on outlined requirements
+
+### 1 Nov 2019
+* *1 hour* Begin outlining Connection object
+
+### 2 Nov 2019
+* *6 hours* Define Connection initialiation
+
+## Week 7
+* *4 hours* Attempt to define Listener connection
