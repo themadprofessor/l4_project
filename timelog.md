@@ -80,4 +80,24 @@
 * *6 hours* Define Connection initialiation
 
 ## Week 7
+
+### 5 Nov 2019
 * *4 hours* Attempt to define Listener connection
+
+## Week 8
+
+### 11 Nov 2019
+* *5 hours* Begin high level trait definitions
+
+### 12 Nov 2019
+* *5 hours* Begin refactoring tokio impl to use high level traits
+
+## Week 9
+
+### 21 Nov 2019
+* *5 hours* Redefine top level error type and begin tokio rewrite to use trait objs
+
+### 23 Nov 2019
+* *8 hours* Continue with tokio rewrite and begin http framer impl
+
+
