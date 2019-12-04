@@ -100,4 +100,11 @@
 ### 23 Nov 2019
 * *8 hours* Continue with tokio rewrite and begin http framer impl
 
+## Week 10
 
+### 03 Dec 2019
+* *1 hour* Update readme, add contributing and setup travis
+* *4 hours* Attempting to fix orphan rule violation
+
+### 04 Dec 2019
+* *2 hours* Add more documention
