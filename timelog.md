@@ -71,4 +71,40 @@
 ### Week 6
 
 ### 29 Oct 2019
-* *1 hours* Expand on outlined requirements
+* *1 hour* Expand on outlined requirements
+
+### 1 Nov 2019
+* *1 hour* Begin outlining Connection object
+
+### 2 Nov 2019
+* *6 hours* Define Connection initialiation
+
+## Week 7
+
+### 5 Nov 2019
+* *4 hours* Attempt to define Listener connection
+
+## Week 8
+
+### 11 Nov 2019
+* *5 hours* Begin high level trait definitions
+
+### 12 Nov 2019
+* *5 hours* Begin refactoring tokio impl to use high level traits
+
+## Week 9
+
+### 21 Nov 2019
+* *5 hours* Redefine top level error type and begin tokio rewrite to use trait objs
+
+### 23 Nov 2019
+* *8 hours* Continue with tokio rewrite and begin http framer impl
+
+## Week 10
+
+### 03 Dec 2019
+* *1 hour* Update readme, add contributing and setup travis
+* *4 hours* Attempting to fix orphan rule violation
+
+### 04 Dec 2019
+* *2 hours* Add more documention

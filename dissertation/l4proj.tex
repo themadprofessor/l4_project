@@ -331,6 +331,14 @@ Design should cover the abstract design in such a way that someone else might be
 
 %==================================================================================================================================
 \chapter{Implementation}
+
+% Notes:
+% - Uses trait objects
+% - Had to define all fn(self) as fn(self: Box<Self>) as needs known size
+% - Async trait fn requires third-party crate
+% - Connection racing adds artificial 5ms delay to IPv4 to encourage IPv6 usage
+% - Tokio hidden by ?(feature-flag, generic param)?
+
 What did you do to implement this idea, and what technical achievements did you make?
 \section{Guidance}
 You can't talk about everything. Cover the high level first, then cover important, relevant or impressive details.
