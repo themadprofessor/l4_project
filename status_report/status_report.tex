@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{fullpage}
+
+\title{The IETF Transport Service API}
+\author{Stuart Reilly - 2258082}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Status report}
+
+\subsection{Proposal}\label{proposal}
+
+\subsubsection{Motivation}\label{motivation}
+
+Modern network programming requires large amounts of boilerplate code in order
+to make the BSD Sockets API usable with modern programming techniques, such
+as asynchronous programming and typed messages.
+Furthermore, BSD Sockets requires the application to determine the protocol
+stack it uses.
+This requires each application to have to be updated in order to change
+protocol stack, inhibiting uptake of alternative protocols.
+The aim of this project is to implement a new high-level network programming
+API, which is asynchronous and provides typed message communication.
+Such an API would remove large amounts of boilerplate and raise the level in 
+the network stack most applications would work with, allowing for alternative
+protocols to be used without updating the updating.
+
+\subsubsection{Aims}\label{aims}
+
+The API must be able to provide enough functionality for a simple single-client
+and single-server programs.
+Where applicable, the API must be asynchronous, through the use of futures.
+The Connection object must be able to send and receive typed messages.
+These typed messages can be of user-defined types, not just types the API
+provides.
+There must be a mechanism to frame messages of a known size, exposed by the
+API.
+
+\subsection{Progress}\label{progress}
+
+\begin{itemize}
+	\item Define the requirements for the API, both functional and
+		non-functional.
+	\item Begin the background section of the dissertation.
+	\item Design high-level traits for the Preconnection, Connection and
+		framer objects.
+	\item Create tokio-based implementations for the Preconnection and
+		Connection traits.
+	\item Implement simple connection racing for DNS results.
+	\item Create a simple HTTP framer implementation.
+	\item Define SelectionProperties and implement Reliability property 
+		handling.
+	\item Create a small example web client using the tokio implantations
+		and the HTTP framer.
+\end{itemize}
+
+\subsection{Problems and risks}\label{problems-and-risks}
+
+\subsubsection{Problems}\label{problems}
+
+\begin{itemize}
+	\item Rust's async/await syntax not being fully stabilised at the 
+		beginning of the project
+	\item Libraries changing their API to fit with the new syntax.
+	\item Initially implementing with generic types rather than trait 
+		objects.
+\end{itemize}
+
+\subsubsection{Risks}\label{risks}
+
+\begin{itemize}
+	\item Defining how framers handle incomplete messages. i.e.\ waiting for
+		more packets.
+		
+		\emph{Mitigation:} Research existing techniques.
+	\item Unsure how best to analyse and evaluate the API and its 
+		tokio implementation.
+
+		\emph{Mitigation:} Both discuss with my advisor and research
+		API evaluation techniques.
+\end{itemize}
+
+\subsection{Plan}\label{plan}
+
+\begin{itemize}
+	\item Week 1-2 - Finalise implementation selection mechanism
+	\item Week 3-4 - Add unit-tests and more integration tests
+	\item Week 5-6 - Finalise code documentation
+	\item Week 7-8 - Analyse and evaluate API
+	\item Week 9-10 - Submit first draft to advisor
+\end{itemize}
+
+\end{document}

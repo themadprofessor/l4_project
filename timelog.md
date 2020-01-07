@@ -77,7 +77,7 @@
 * *1 hour* Begin outlining Connection object
 
 ### 2 Nov 2019
-* *6 hours* Define Connection initialiation
+* *6 hours* Define Connection initialisation
 
 ## Week 7
 
@@ -107,4 +107,23 @@
 * *4 hours* Attempting to fix orphan rule violation
 
 ### 04 Dec 2019
-* *2 hours* Add more documention
+* *2 hours* Add more documentation
+
+## Week 12
+
+### 17 Dec 2019
+* *4 hours* Refactor error types for better ergonomics and add more documentation
+
+### 18 Dec 2019
+* *1 hour* Write status report
+
+### 19 Dec 2019
+* *5 hours* Reimplement dns resolution and attempt to fix invalid connection racing
+
+### 20 Dec 2019
+* *5 hours* Fix invalid connection racing and add logging
+
+## Week 13
+
+### 28 Dec 2019
+* *2 hours* Attempt to design Listener trait
