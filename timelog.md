@@ -107,7 +107,10 @@
 * *4 hours* Attempting to fix orphan rule violation
 
 ### 04 Dec 2019
-* *2 hours* Add more documentation
+* *3 hours* Add more documentation
+
+### 08 Dec 2019
+* *3 hours* Add more documentation and continue http framer impl
 
 ## Week 12
 
@@ -127,3 +130,6 @@
 
 ### 28 Dec 2019
 * *2 hours* Attempt to design Listener trait
+
+## Week Something
+* *1 hours* Continue with Listener trait design and impl
