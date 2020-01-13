@@ -133,3 +133,8 @@
 
 ## Week Something
 * *1 hours* Continue with Listener trait design and impl
+
+## Week Something + 1
+
+### 13 Jan 2019
+* *2 hours* Add section to Rust background (async/await and Futures) and add connection racing to Design
