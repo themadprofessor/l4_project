@@ -132,4 +132,10 @@
 * *2 hours* Attempt to design Listener trait
 
 ## Week Something
+
+### 05 Jan 2020
 * *1 hours* Continue with Listener trait design and impl
+
+### 09 Jan 2020
+* *2 hours* Implement TCP tokio listener
+* *1 hour* Fix dissertation compilation and start impl section

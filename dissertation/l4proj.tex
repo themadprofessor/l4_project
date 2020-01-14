@@ -94,10 +94,10 @@ This may have contributed to the slow adoption of IPv6, since every application 
 only the network implementation.
 BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
 While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the development of 
-alternative protocols such as DCCP and SCTP.
+alternative protocols such as DCCP and SCTP .
 
 Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O.
-Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous API.
+Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous API .
 An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better performance.
 
 In order to resolve the above issues, a new networking API must be created.
@@ -189,7 +189,7 @@ If you are unsure about how to cite online sources, please see this guide: \url{
 \section{Rust}
 
 Rust is a modern systems programming language, which aids developers "write faster, more reliable software", according to the Rust book
-(\cite{kalbnikRustProgrammingLanguagen.d.}).
+(\cite{kalbnik_rust_nodate}).
 Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
 
 One major issue with writing system software is ownership.
@@ -331,6 +331,13 @@ Design should cover the abstract design in such a way that someone else might be
 
 %==================================================================================================================================
 \chapter{Implementation}
+
+\section{Trait Objects}
+In order to allow for the underlying implementation of the API to change with minimal modification to code using the API,
+the main objects (Preconnection, Listener and Connection) had to be implemented using trait objects.
+Trait objects are Rust's method of dynamic dispatch.
+While using trait objects would add a performance overhead due to pointer indirection and dynamic dispatch, the benefit
+of allowing the implementation to change out ways this.
 
 % Notes:
 % - Uses trait objects
