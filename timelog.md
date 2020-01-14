@@ -139,3 +139,8 @@
 ### 09 Jan 2020
 * *2 hours* Implement TCP tokio listener
 * *1 hour* Fix dissertation compilation and start impl section
+
+## Week Something + 1
+
+### 13 Jan 2019
+* *2 hours* Add section to Rust background (async/await and Futures) and add connection racing to Design

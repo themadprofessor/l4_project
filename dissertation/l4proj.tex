@@ -227,6 +227,16 @@ code to be written faster and cleaner, without any performance impact.
 Another example is Rust's Option type, which is either Some wrapping an object, or None.
 This is equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as the type-system forces the
 programmer to check for the presence of an object.
+A Future in Rust is a type which is polled until it is complete.
+A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
+Rather than polling all the Futures manually, a runtime is used to manage the Futures.
+The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is polled.
+
+Recently, Rust introduced support for async/await syntax.
+A function can be marked as async, which changes the return type to be a Futures wrapping the original return type.
+When an async function reaches an await, the poll being used to progress the Future returns Pending, informing the runtime another Future should be polled.
+The Future will continue to return Pending until the Future being awaited completes, at which point the function will continue until the next await or the function returns.
+The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually handling Futures.
 
 What did other people do, and how is it relevant to what you want to do?
 \section{Guidance}
@@ -326,6 +336,16 @@ Make it clear how you derived the constrained form of your problem via a clear a
 %==================================================================================================================================
 \chapter{Design}
 How is this problem to be approached, without reference to specific implementation details? 
+
+\section{Connection Racing}
+Since the API is protocol-agnostic, there must be a mechanism of determining the protocol stack to use internally.
+This can result in multiple possible protocol stacks, for example TCP-over-IPv4 and SCTP-over-IPv6.
+Each protocol stack will be initialised and raced to find the optimal stack.
+Racing will implement the IETF Happy Eyeballs algorithm, in which less-desirable protocol stacks are given a delay before joining the race.
+As well as different protocol stacks, different IP addresses will be raced.
+DNS resolution will result in the set of addresses to race.
+While this can result in a large number of connections to race, the use of Happy Eyeballs will reduce the number of connections being raced simultaneously.
+
 \section{Guidance}
 Design should cover the abstract design in such a way that someone else might be able to do what you did, but with a different language or library or tool.
 
