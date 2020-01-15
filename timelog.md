@@ -144,3 +144,6 @@
 
 ### 13 Jan 2019
 * *2 hours* Add section to Rust background (async/await and Futures) and add connection racing to Design
+
+### 15 Jan 2019
+* *2 hours* Add more to connection racing and start flow diagram

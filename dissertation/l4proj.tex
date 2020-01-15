@@ -81,36 +81,45 @@
 \pagenumbering{arabic} 
 
 The Berkeley socket API (BSD sockets) allows an application to communicate over the Internet since 1983.
-A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has been created.
+A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has
+been created.
 This allows a programmer with understanding of local file I/O to work with network sockets.
-While this model of network I/O has some similarities to local file I/O, in reality they are distinct and should be treated as such.
-One prime example of this is how network I/O has a range of protocols which can be used at each layer of the networking stack,
-each providing different grantees and properties, and the application must specify which protocol stack to use.
-Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not need to
-manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
+While this model of network I/O has some similarities to local file I/O, in reality they are distinct and should be
+treated as such.
+One prime example of this is how network I/O has a range of protocols which can be used at each layer of the networking
+stack, each providing different grantees and properties, and the application must specify which protocol stack to use.
+Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not
+need to manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
 
-Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application to be modified.
-This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6 rather than 
-only the network implementation.
+Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application
+to be modified.
+This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6
+rather than only the network implementation.
 BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
-While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the development of 
-alternative protocols such as DCCP and SCTP .
+While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the
+development of alternative protocols such as DCCP and SCTP .
 
 Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O.
-Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous API .
-An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better performance.
+Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous
+API .
+An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better
+performance.
 
 In order to resolve the above issues, a new networking API must be created.
-Such an API must be protocol-agnostic and asynchronous, while allowing not reducing the possible uses of the API in comparison to
-BSD sockets.
-By being protocol-agnostic, the API decouples applications from the transport-layer, allowing new protocols to be designed and used
-without applications having to be modified.
-Modern network programming relies on asynchronous networking, which previously would require boilerplate over BSD sockets.
+Such an API must be protocol-agnostic and asynchronous, while allowing not reducing the possible uses of the API in
+comparison to BSD sockets.
+By being protocol-agnostic, the API decouples applications from the transport-layer, allowing new protocols to be
+designed and used without applications having to be modified.
+Modern network programming relies on asynchronous networking, which previously would require boilerplate over BSD
+sockets.
 By having the API be asynchronous, this boilerplate can be removed.
 
-The aim of this project is to create an API which fulfills these requirements, and evaluate it in comparison to BSD sockets.
-The IETF Transport Services API will provide the overall design of the API, and Rust will be the implementation language used.
-Rust provides high-level safety with low-level performance and access, while also having be designed with concurrent programming in mind.
+The aim of this project is to create an API which fulfills these requirements, and evaluate it in comparison to BSD
+sockets.
+The IETF Transport Services API will provide the overall design of the API, and Rust will be the implementation language
+used.
+Rust provides high-level safety with low-level performance and access, while also having be designed with concurrent
+programming in mind.
 
 
 Why should the reader care about what are you doing and what are you actually doing?
@@ -188,55 +197,65 @@ If you are unsure about how to cite online sources, please see this guide: \url{
 
 \section{Rust}
 
-Rust is a modern systems programming language, which aids developers "write faster, more reliable software", according to the Rust book
-(\cite{kalbnik_rust_nodate}).
+Rust is a modern systems programming language, which aids developers "write faster, more reliable software", according
+to the Rust book (\cite{kalbnik_rust_nodate}).
 Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
 
 One major issue with writing system software is ownership.
 Who owns a resource, such as memory or file handles, and for how long.
-In higher level languages, a garbage collector will ensure no resources live longer than they are needed, often through the use of reference
-counting.
-Garbage collection does elevate the burden of resource management from the developer, but in return, the developer has much less control
-over resources, and the resources will live of a non-deterministic length of time with most garbage collectors.
-Languages like C and C++ require the programmer to manage resources, releasing them manually, leading to unreleased resources if implemented
-incorrectly.
-Rust enforces correct resource management by delegating all resource management to the compiler, through its borrow checker.
+In higher level languages, a garbage collector will ensure no resources live longer than they are needed, often through
+the use of reference counting.
+Garbage collection does elevate the burden of resource management from the developer, but in return, the developer has
+much less control over resources, and the resources will live of a non-deterministic length of time with most garbage
+collectors.
+Languages like C and C++ require the programmer to manage resources, releasing them manually, leading to unreleased
+resources if implemented incorrectly.
+Rust enforces correct resource management by delegating all resource management to the compiler, through its borrow
+checker.
 Only a single entity can own a resource in Rust.
 All other entities must use references to interact with the resource.
-Furthermore, either a single mutable reference or an arbitrary number of immutable references can exist for a resource at once.
+Furthermore, either a single mutable reference or an arbitrary number of immutable references can exist for a resource
+at once.
 These references cannot live longer than the entity owning the resource, which is enforced by the compiler.
 When a reference goes out of scope, it is freed.
-When an entity goes out of scope, there must be no remaining references to the entity, and the resources the entity owns are freed.
-Through this method, invalid references cannot exist, and it is impossible to release a resource which has already been released.
-A side effect of only allowing a single mutable reference, or an arbitrary number of immutable references, the compiler can guarantee a
-compiled program is data race free.
-This is because, only a single entity can modify a resource, while knowing no other entities can read the resource or modify the resource.
+When an entity goes out of scope, there must be no remaining references to the entity, and the resources the entity owns
+are freed.
+Through this method, invalid references cannot exist, and it is impossible to release a resource which has already been
+released.
+A side effect of only allowing a single mutable reference, or an arbitrary number of immutable references, the compiler
+can guarantee a compiled program is data race free.
+This is because, only a single entity can modify a resource, while knowing no other entities can read the resource or
+modify the resource.
 
 Being a modern language, Rust provides some higher level concepts and construct to systems programming.
 While Rust is a statically typed language, it provides local type inference, allowing for cleaning code.
-Its type-system is inspired by other languages such as Haskell, as such a programmer can express a large amount of information through
-the types they use alone.
+Its type-system is inspired by other languages such as Haskell, as such a programmer can express a large amount of
+information through the types they use alone.
 Furthermore, Rust has support for higher-order functions, because functions are a first-class type.
 Functions, such as map and fold, are provided, not directly for collections of items, rather iterators.
-Iterators in Rust provide a functional method for working with collections of items, while providing performance similar to a comparable
-loop construct.
+Iterators in Rust provide a functional method for working with collections of items, while providing performance similar
+to a comparable loop construct.
 
 Rust also emphasises its ability to provide "zero-cost abstractions".
-This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level constructs, allowing for
-code to be written faster and cleaner, without any performance impact.
+This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level
+constructs, allowing for code to be written faster and cleaner, without any performance impact.
 Another example is Rust's Option type, which is either Some wrapping an object, or None.
-This is equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as the type-system forces the
-programmer to check for the presence of an object.
+This is equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as the
+type-system forces the programmer to check for the presence of an object.
 A Future in Rust is a type which is polled until it is complete.
 A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
 Rather than polling all the Futures manually, a runtime is used to manage the Futures.
-The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is polled.
+The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is
+polled.
 
 Recently, Rust introduced support for async/await syntax.
 A function can be marked as async, which changes the return type to be a Futures wrapping the original return type.
-When an async function reaches an await, the poll being used to progress the Future returns Pending, informing the runtime another Future should be polled.
-The Future will continue to return Pending until the Future being awaited completes, at which point the function will continue until the next await or the function returns.
-The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually handling Futures.
+When an async function reaches an await, the poll being used to progress the Future returns Pending, informing the
+runtime another Future should be polled.
+The Future will continue to return Pending until the Future being awaited completes, at which point the function will
+continue until the next await or the function returns.
+The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually
+handling Futures.
 
 What did other people do, and how is it relevant to what you want to do?
 \section{Guidance}
@@ -255,13 +274,15 @@ What did other people do, and how is it relevant to what you want to do?
 
 %==================================================================================================================================
 \chapter{Analysis/Requirements}
-The project will aim to produce a high-level, typed and asynchronous networking API in the Rust programming language, making use of
-Rust's async/await syntax and Futures.
-This API is intended to be a replacement for BSD sockets, and as such will provide similar functionality, albeit at a higher level.
+The project will aim to produce a high-level, typed and asynchronous networking API in the Rust programming language,
+making use of Rust's async/await syntax and Futures.
+This API is intended to be a replacement for BSD sockets, and as such will provide similar functionality, albeit at a
+higher level.
 
-In this chapter we define a set of functional and non-functional requirements, splitting each into ''required'' and ''optional''.
-These requirements must fulfill the aims outlined in Chapter 1 and are intended to be built upon and make use of the prior research
-discussed in Chapter 2.
+In this chapter we define a set of functional and non-functional requirements, splitting each into ''required'' and
+''optional''.
+These requirements must fulfill the aims outlined in Chapter 1 and are intended to be built upon and make use of the
+prior research discussed in Chapter 2.
 
 \section{Functional Requirements}
 
@@ -274,41 +295,44 @@ As such a Preconnection must be defined which can initiate a Connection object, 
 
 The API must be asynchronous, utilising futures as the mechanism of handling asynchronous events.
 This is required, because one the main issues with BSD sockets discussed in chapter 1 was its synchronous nature.
-Asynchronous network programming is the modern technique, as such must be the primary method of using a new networking API.
+Asynchronous network programming is the modern technique, as such must be the primary method of using a new networking
+API .
 Futures are the de facto standard method for asynchronous programming in Rust, as such they shall be used.
 
 The API must define a Connection object which can send and receive typed data.
-As discussed in chapter 1, one of the issues with BSD sockets is they only support sending byte streams or byte datagrams for
-TCP and UDP sockets respectively.
-As such the API must expose a mechanism for typed data to be passed to a Connection object, which will converted into the appropriate
-byte structure by the Connection object.
+As discussed in chapter 1, one of the issues with BSD sockets is they only support sending byte streams or byte
+datagrams for TCP and UDP sockets respectively.
+As such the API must expose a mechanism for typed data to be passed to a Connection object, which will converted into
+the appropriate byte structure by the Connection object.
 
 The API must define a mechanism to frame messages of a known size.
-This is required, because in order to transform underlying transport layer data to and from useful message data, it must be framed.
-Without a framing mechanism, a byte-stream based transport layer will not be able to send and received typed data, which is required
-by the previous requirement, and has been discussed as an issue with BSD sockets in chapter 1.
+This is required, because in order to transform underlying transport layer data to and from useful message data,
+it must be framed.
+Without a framing mechanism, a byte-stream based transport layer will not be able to send and received typed data,
+which is required by the previous requirement, and has been discussed as an issue with BSD sockets in chapter 1.
 
 \subsection{Optional}
 
 The API could provide a mechanism to frame messages of an unknown size.
-This would allow byte-stream based transport layer data to be transformed to and from useful message data, even without knowing the
-size of the data being transfered.
-Since this section of the TAPS specification is currently not well-defined and is under continuous modification, this will not be
-required to be implemented by this project.
+This would allow byte-stream based transport layer data to be transformed to and from useful message data, even without
+knowing the size of the data being transfered.
+Since this section of the TAPS specification is currently not well-defined and is under continuous modification,
+this will not be required to be implemented by this project.
 
 The API could provide a Connection object which can receive partial data.
-Since the underlying transport layer could not provide reliable data transfer, the Connection object could provide partial data,
-which could be completed with subsequent packets.
-Since this section of the TAPS specification is currently not well-defined and is under continuous modification, this will not be
-required to be implemented by this project.
+Since the underlying transport layer could not provide reliable data transfer, the Connection object could provide
+partial data, which could be completed with subsequent packets.
+Since this section of the TAPS specification is currently not well-defined and is under continuous modification, this
+will not be required to be implemented by this project.
 
-The API could provide a mechanism to enforce Preconnection object validity at compile-time through the use of Rust's type system.
-A Preconnection requires a remote endpoint or local endpoint in order to initiate a Connection or begin listening for Connections,
-respectively.
-This can be implemented through a runtime error trivially, but in order to ensure the API is as safe as possible, this could be
-implemented as a compile-time error.
-Since implementing this as a compile-time error is non-trivial, and does not impact the useabilty of the API, this will not be
-required to implement this project.
+The API could provide a mechanism to enforce Preconnection object validity at compile-time through the use of Rust's
+type system.
+A Preconnection requires a remote endpoint or local endpoint in order to initiate a Connection or begin listening for
+Connections, respectively.
+This can be implemented through a runtime error trivially, but in order to ensure the API is as safe as possible, this
+could be implemented as a compile-time error.
+Since implementing this as a compile-time error is non-trivial, and does not impact the useabilty of the API, this will
+not be required to implement this project.
 
 \section{Non-Functional Requirements}
 
@@ -328,23 +352,56 @@ will likely be used to provide this mechanism.
 
 The API should not have a large impact performance over raw BSD sockets.
 A large performance impact will hinder the adoption of the API, and as such should be avoided.
-Since this is primarly a proof-of-concept project, this is not required, but should still be taken into account.
+Since this is primarily a proof-of-concept project, this is not required, but should still be taken into account.
 
 \section{Guidance}
 Make it clear how you derived the constrained form of your problem via a clear and logical process. 
 
 %==================================================================================================================================
 \chapter{Design}
-How is this problem to be approached, without reference to specific implementation details? 
+In this section, we discuss the high level design of the API, without implementation specific details.
+Rust will be used for demonstrating the ideas discussed as it supports the required features.
+
+\section{High Level API}
+The API will be expressed through abstract types with multiple possible concrete implementations.
+Users of the API will operate exclusively with the abstract types in order to allow the underlying implementation to
+change with minimal changes to the user's code.
+
+The Connection, Preconnection and Listener types will be generic over the framer used to frame the data which the
+connections will be operating on.
+This will ensure the connections can only handle a specific strongly-typed data type.
+All methods on the Connection type which either receive data or send data will utilise this generic parameter in their
+return value and parameters respectively.
+The Preconnection's listen and initiate methods will pass this generic parameter to the new Listener object or
+Connection object respectively.
+
+The close and abort functions of the Connection type will consume the connection, rather than taking a mutable reference
+like other methods.
+A compiler can then ensure the connection is never used after being closed or aborted.
+For example, the Rust compiler will drop the connection object within the close or abort functions, and ensure no other
+variables have ownership of the connection when it is closed or aborted.
+
+\section{Flow}
+\includegraphics[width=\textwidth]{diagrams/flow.png}
 
 \section{Connection Racing}
 Since the API is protocol-agnostic, there must be a mechanism of determining the protocol stack to use internally.
 This can result in multiple possible protocol stacks, for example TCP-over-IPv4 and SCTP-over-IPv6.
 Each protocol stack will be initialised and raced to find the optimal stack.
-Racing will implement the IETF Happy Eyeballs algorithm, in which less-desirable protocol stacks are given a delay before joining the race.
+Racing will implement the IETF Happy Eyeballs algorithm, in which less-desirable protocol stacks are given a delay
+before joining the race.
 As well as different protocol stacks, different IP addresses will be raced.
 DNS resolution will result in the set of addresses to race.
-While this can result in a large number of connections to race, the use of Happy Eyeballs will reduce the number of connections being raced simultaneously.
+While this can result in a large number of connections to race, the use of Happy Eyeballs will reduce the number of
+connections being raced simultaneously.
+
+Each of the possible protocol stack and address combinations will be raced asynchronously.
+Once the first connection is established, all other possible connections will be closed and the successful connection
+will be returned.
+Remaining connections will be closed asynchronously, allowing the race function to return quickly.
+A timeout could be used for closing the connections, resulting in an abort if the connection fails to close promptly,
+but this choice will be left as an implementation detail.
+The result of multiple connections being established at the same time will be left as an implementation detail.
 
 \section{Guidance}
 Design should cover the abstract design in such a way that someone else might be able to do what you did, but with a different language or library or tool.
