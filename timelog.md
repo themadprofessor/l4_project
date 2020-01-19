@@ -142,8 +142,11 @@
 
 ## Week Something + 1
 
-### 13 Jan 2019
+### 13 Jan 2020
 * *2 hours* Add section to Rust background (async/await and Futures) and add connection racing to Design
 
-### 15 Jan 2019
+### 15 Jan 2020
 * *2 hours* Add more to connection racing and start flow diagram
+
+### 19 jan 2020
+* *2 hours* Finish flow diagram, add flow and framer to design section
