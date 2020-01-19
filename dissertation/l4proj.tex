@@ -6,6 +6,8 @@
 %
 % put any additional packages here
 %
+\usepackage{listings-rust}
+\usepackage{placeins}[section,above]
 
 \begin{document}
 
@@ -360,7 +362,8 @@ Make it clear how you derived the constrained form of your problem via a clear a
 %==================================================================================================================================
 \chapter{Design}
 In this section, we discuss the high level design of the API, without implementation specific details.
-Rust will be used for demonstrating the ideas discussed as it supports the required features.
+Rust will be used for demonstrating the ideas discussed as it supports the required features, although no guarantee is
+given for if the examples successfully compile.
 
 \section{High Level API}
 The API will be expressed through abstract types with multiple possible concrete implementations.
@@ -381,13 +384,38 @@ A compiler can then ensure the connection is never used after being closed or ab
 For example, the Rust compiler will drop the connection object within the close or abort functions, and ensure no other
 variables have ownership of the connection when it is closed or aborted.
 
+A Framer type is a type which can frame and deframe a given piece of data, as well as optionally store metadata for use
+in framing and deframing.
+The Framer must be generic over the data type it will frame and deframe.
+An example is a HTTP framer, which can frame arbitrary data by prepending the data with a HTTP request header, which can
+be configured by giving the framer metadata.
+A HTTP framer would also deframe arbitrary data be first parsing a HTTP response header.
+
+%\begin{lstlisting}[language=Rust, float, label=lst:conn, caption={An example of the abstract type definition for a
+%    Connection object.}]
+%trait Connection<F: Framer> {
+%    async fn send(&mut self, data: F::Input) -> Result<(), Error>;
+%    async fn receive(&mut self) -> Result<F::Output, Error>;
+%    async fn close(self) -> Result<(), Error>;
+%    fn abort(self);
+%}
+%\end{lstlisting}
+
 \section{Flow}
+
+As shown in Figure \ref{fig:flow}, there are both asynchronous and synchronous sections of opening a Connection.
+The asynchronous sections are when the program would have to carry out some I/O, for example binding a Listener to a
+port.
+The remaining sections are either a trivial object creation or solving properties, as such are synchronous.
+Solving properties can contain a concurrent implementation if the implementation deems this necessary.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{diagrams/flow}
     \caption{A diagram to show how the three main objects flow from one to another.
     Oval nodes are objects, rectangular nodes are states in the transition between objects, dashed arrows are
     asynchronous state changes, and solid arrows are synchronous state changes.}
+    \label{fig:flow}
 \end{figure}
 
 \section{Connection Racing}
