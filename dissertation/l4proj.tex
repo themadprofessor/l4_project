@@ -99,7 +99,7 @@ BSD sockets defined the default protocol to handle streams and datagrams are TCP
 While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the
 development of alternative protocols such as DCCP and SCTP .
 
-Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O.
+Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O .
 Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous
 API .
 An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better
@@ -315,7 +315,7 @@ which is required by the previous requirement, and has been discussed as an issu
 
 The API could provide a mechanism to frame messages of an unknown size.
 This would allow byte-stream based transport layer data to be transformed to and from useful message data, even without
-knowing the size of the data being transfered.
+knowing the size of the data being transferred.
 Since this section of the TAPS specification is currently not well-defined and is under continuous modification,
 this will not be required to be implemented by this project.
 
@@ -331,7 +331,7 @@ A Preconnection requires a remote endpoint or local endpoint in order to initiat
 Connections, respectively.
 This can be implemented through a runtime error trivially, but in order to ensure the API is as safe as possible, this
 could be implemented as a compile-time error.
-Since implementing this as a compile-time error is non-trivial, and does not impact the useabilty of the API, this will
+Since implementing this as a compile-time error is non-trivial, and does not impact the usability of the API, this will
 not be required to implement this project.
 
 \section{Non-Functional Requirements}
@@ -382,7 +382,13 @@ For example, the Rust compiler will drop the connection object within the close 
 variables have ownership of the connection when it is closed or aborted.
 
 \section{Flow}
-\includegraphics[width=\textwidth]{diagrams/flow.png}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{diagrams/flow}
+    \caption{A diagram to show how the three main objects flow from one to another.
+    Oval nodes are objects, rectangular nodes are states in the transition between objects, dashed arrows are
+    asynchronous state changes, and solid arrows are synchronous state changes.}
+\end{figure}
 
 \section{Connection Racing}
 Since the API is protocol-agnostic, there must be a mechanism of determining the protocol stack to use internally.
