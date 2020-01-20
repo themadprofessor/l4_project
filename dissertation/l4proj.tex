@@ -7,7 +7,6 @@
 % put any additional packages here
 %
 \usepackage{listings-rust}
-\usepackage{placeins}[section,above]
 
 \begin{document}
 
@@ -365,13 +364,13 @@ In this section, we discuss the high level design of the API, without implementa
 Rust will be used for demonstrating the ideas discussed as it supports the required features, although no guarantee is
 given for if the examples successfully compile.
 
-\section{High Level API}
+\section{Abstract API}
 The API will be expressed through abstract types with multiple possible concrete implementations.
 Users of the API will operate exclusively with the abstract types in order to allow the underlying implementation to
 change with minimal changes to the user's code.
 
 The Connection, Preconnection and Listener types will be generic over the framer used to frame the data which the
-connections will be operating on.
+connections will be operating on. \emph{The preceding may change to just the data being transferred.}
 This will ensure the connections can only handle a specific strongly-typed data type.
 All methods on the Connection type which either receive data or send data will utilise this generic parameter in their
 return value and parameters respectively.
@@ -387,19 +386,39 @@ variables have ownership of the connection when it is closed or aborted.
 A Framer type is a type which can frame and deframe a given piece of data, as well as optionally store metadata for use
 in framing and deframing.
 The Framer must be generic over the data type it will frame and deframe.
-An example is a HTTP framer, which can frame arbitrary data by prepending the data with a HTTP request header, which can
+An example is a HTTP framer, which can frame encodable data by prepending the data with a HTTP request header, which can
 be configured by giving the framer metadata.
-A HTTP framer would also deframe arbitrary data be first parsing a HTTP response header.
+A HTTP framer would also deframe decodable data be first parsing a HTTP response header.
 
-%\begin{lstlisting}[language=Rust, float, label=lst:conn, caption={An example of the abstract type definition for a
-%    Connection object.}]
-%trait Connection<F: Framer> {
-%    async fn send(&mut self, data: F::Input) -> Result<(), Error>;
-%    async fn receive(&mut self) -> Result<F::Output, Error>;
-%    async fn close(self) -> Result<(), Error>;
-%    fn abort(self);
-%}
-%\end{lstlisting}
+Data which can be framed/deframed must be able to be encoded and decoded from raw bytes if it is to be a Framer's input
+and output data type respectively.
+As such they must be an Encode type and/or a Decode type, which define a type which can be encoded into bytes and
+decoded from raw bytes respectively.
+An Encode type should also provide a hint to the encoded size of the type, to allow for memory to be preallocated if
+required.
+
+\section{Application Layer Protocols}
+Application layer protocols have requirements for the protocol stack they operate on, such as HTTP requiring a reliable
+protocol stack.
+Having the user of the API specify these requirements will require unnecessary boilerplate, so an abstract Protocol type
+will be defined.
+A Protocol type must specify the protocol stack requirements required for the protocol.
+As shown in Listing \ref{lst:proto_funcs}, the Protocol type can be used to allow the user of the API to create a
+Connection or Listener without constructing a valid Preconnection manually.
+Furthermore, by defining an abstract Protocol type, other libraries can implement this and extend the application layer
+protocols supported in the ecosystem.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:proto_funcs, caption={An example of functions which utilise the
+    abstract Protocol type.}]
+pub async fn new_connection<P, D>(endpoint: Endpoint) -> Connection<D>
+    where
+        P: Protocol,
+        D: P::Data;
+pub async fn new_listener<P, D>(endpoint: Endpoint) -> Listener<D>
+    where
+        P: Protocol,
+        D: P::Data;
+\end{lstlisting}
 
 \section{Flow}
 
@@ -436,9 +455,6 @@ Remaining connections will be closed asynchronously, allowing the race function 
 A timeout could be used for closing the connections, resulting in an abort if the connection fails to close promptly,
 but this choice will be left as an implementation detail.
 The result of multiple connections being established at the same time will be left as an implementation detail.
-
-\section{Guidance}
-Design should cover the abstract design in such a way that someone else might be able to do what you did, but with a different language or library or tool.
 
 %==================================================================================================================================
 \chapter{Implementation}
