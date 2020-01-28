@@ -150,3 +150,8 @@
 
 ### 19 jan 2020
 * *2 hours* Finish flow diagram, add flow and framer to design section
+
+## Week Something + 2
+
+### 27 Jan 2020
+* *2 hours* Add some discussion in design section
