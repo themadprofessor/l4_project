@@ -155,3 +155,9 @@
 
 ### 27 Jan 2020
 * *2 hours* Add some discussion in design section
+
+### 28 Jan 2020
+* *3 hours* Add more discussion and expand on the listener trait in the design section
+
+### 29 Jan 2020
+* *0.5 hours* Add section on preconnection in the design section

@@ -361,48 +361,98 @@ Make it clear how you derived the constrained form of your problem via a clear a
 %==================================================================================================================================
 \chapter{Design}
 In this section, we discuss the high level design of the API, without implementation specific details.
-Rust will be used for demonstrating the ideas discussed as it supports the required features, although no guarantee is
-given for if the examples successfully compile.
 
 \section{Abstract API}
 The API will be expressed through abstract types with multiple possible concrete implementations.
-Users of the API will operate exclusively with the abstract types (traits) in order to allow the underlying
+Users of the API will operate almost exclusively with the traits (abstract types) in order to allow the underlying
 implementation and protocol stack to change with minimal changes to the user's code.
 If the API was defined with concrete types through the use of structs, the underlying implementation which handles the
 the native network would not be able to change without major changes to the user's code.
 
-The Connection, Preconnection and Listener types will be generic over the framer used to frame the data which the
-connections will be operating on.
-This will ensure the connections can only handle a specific strongly-typed data type.
-All methods on the Connection type which either receive data or send data will utilise this generic parameter in their
+The Preconnection type will be defined as a concrete struct, rather than a trait, unlike the Listener and Connection
+types.
+Since a Preconnection is a configuration type which is intended to be independent of the underlying implementation,
+using a trait would be redundant as each underlying implementation would implement the trait identically.
+Furthermore, due to issues with the Rust compiler, its difficult to change generic parameters with trait methods.
+Using a struct allows for the Preconnection's initate and listen methods to only be avalible if a remote or local
+endpoint has been specified respectively, and have the compiler enforce these constraints.
+
+The Connection and Listener traits and the Preconnection struct will be generic over the framer used to frame the data
+which the connections will be operating on.
+This will ensure the connections can only handle a specific strongly-typed data trait.
+All methods on the Connection trait which either receive data or send data will utilise this generic parameter in their
 return value and parameters respectively.
 The Preconnection's listen and initiate methods will pass this generic parameter to the new Listener object or
 Connection object respectively.
+An alternative approach is to have the traits generic over the data which the connections will be operating on.
+The issue with this approach is the compiler cannot ensure a Connection has certain properties which methods could rely
+on.
+For example, a method could require a Connection which is framed with TLS .
+If the Connection is generic over the Framer, the compiler can ensure only Connections which are framed with TLS are
+used, ensuring the data being transmitted is encrypted.
+Furthermore, a collection of traits a Framer could implement could be created to ensure only Connections with Framers
+which have specific properties can be used with certain methods.
 
-The close and abort functions of the Connection type will consume the connection, rather than taking a mutable reference
-like other methods.
-A compiler can then ensure the connection is never used after being closed or aborted.
-For example, the Rust compiler will drop the connection object within the close or abort functions, and ensure no other
-variables have ownership of the connection when it is closed or aborted.
+The close and abort functions of the Connection trait will consume the connection, rather than taking a mutable
+reference like other methods.
+This allows the compiler to ensure the Connection will be dropped within the close and abort functions, and no other
+variable has a reference to the Connection, preventing the Connection from being used after it is closed or aborted.
 
-A Framer type is a type which can frame and deframe a given piece of data, as well as optionally store metadata for use
-in framing and deframing.
-The Framer must be generic over the data type it will frame and deframe.
+A Framer trait defines a type which can frame and deframe a given piece of data, as well as optionally store metadata
+for use in framing and deframing.
+The Framer must be generic over the data types it will frame and deframe.
 By having a Framer be generic over both the data it can frame and deframe, different types can be used for input and
 output, removing the chance of the end user using the incorrect data.
 An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
 Using different types for framing and deframing means the end user cannot accidentally send the data they have received
 back to the sender.
-A HttpRequest object and HttpResponse object would contain a type which is an Encode type and a Decode type respectively.
+A HttpRequest object and HttpResponse object would contain a type which implements the Encode and Decode trait
+respectively.
 
-Data which can be framed/deframed must be able to be encoded and decoded from raw bytes if it is to be a Framer's input
-and output data type respectively.
-As such they must be an Encode type and/or a Decode type, which define a type which can be encoded into bytes and
+Data which can be framed or deframed must be able to be encoded or decoded from raw bytes if it is to be a Framer's
+input and output data trait respectively.
+As such they must implement Encode trait and/or a Decode trait, which define a type which can be encoded into bytes and
 decoded from raw bytes respectively.
-An Encode type should also provide a hint to the encoded size of the type, to allow for memory to be preallocated if
+An Encode trait should also provide a hint to the encoded size of the type, to allow for memory to be preallocated if
 required.
-There exists the Serialize and Deserialize traits from the serde trait, which appear to be similar in use.
-The Deserialize trait assumes a
+There exists the Serialize and Deserialize traits from the Serde trait, which appear to be similar to Encode and Decode.
+The aim of Serde's traits it to map between an Rusts's data model and Serde's data model.
+Serde's data model is designed to be used in conjuction with existing data formats, rather than an arbitrary collection
+of bytes.
+Therefore, the Encode and Decode traits are needed to map between typed, structured data and raw bytes.
+Serde's trait would be used in Framers to convert structured data to and from a particular data format, which is then
+framed for sending and deframed when read.
+
+The Listener trait represents a type which is listening for Connections asynchronously.
+One approach to design this trait is to define the trait with a method which returns a Future that resolves into a
+Connection when one is received.
+An issue with this design is it does not represent a Listener as what it is.
+Conceptually a Listener is an asynchronous stream of Connections, and this design represents a Listener as an object
+which is idle until the user requests a Connection.
+At this point it then begins to listen for incoming connections, which could lead to lost connections.
+A better design is to have all implementations of the Listener trait also implement the Stream trait from the futures
+crate.
+This allows a Listener to make use of the existing Stream ecosystem, such as the StreamExt trait, which provides an
+Iterator-style interface to a Stream.
+As shown in Listing \ref{lst:listener}, the implementation for the Stream trait is required to produce an Item which
+either a Connection or an Error.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:listener, caption={The Listener trait, showing the Stream
+    implementation requirement for all implementers.}]
+pub trait Listener<F>:
+    Stream<
+    Item = Result<
+        Connection<F>,
+        Error,
+    >,
+>
+where
+    F: Framer + Send + 'static,
+{
+    fn connection_limit(&mut self, limit: usize);
+}
+
+\end{lstlisting}
 
 \section{Application Layer Protocols}
 Application layer protocols have requirements for the protocol stack they operate on, such as HTTP requiring a reliable
@@ -416,21 +466,13 @@ approach would replicate, therefore it will not be used.
 Another approach is to define an abstract Protocol type as a trait, with a method to create a default Preconnection for
 the protocol.
 This would allow third-party crates to add application layer protocols without the API to be updated.
-As shown in Listing \ref{lst:proto_funcs}, the Protocol type can be used to allow the user of the API to create a
-Connection or Listener without constructing a valid Preconnection manually.
-Furthermore, by defining an abstract Protocol type, other libraries can implement this and extend the application layer
-protocols supported in the ecosystem.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:proto_funcs, caption={An example of functions which utilise the
-    abstract Protocol type.}]
-pub async fn new_connection<P, D>(endpoint: Endpoint) -> Connection<D>
+\begin{lstlisting}[language=Rust, float=h, label=lst:protocol, caption={The Protocol trait, add more info here}]
+pub trait Protocol {
+    fn preconnection() -> Preconnection<F>
     where
-        P: Protocol,
-        D: P::Data;
-pub async fn new_listener<P, D>(endpoint: Endpoint) -> Listener<D>
-    where
-        P: Protocol,
-        D: P::Data;
+        F: Framer + Send + 'static;
+}
 \end{lstlisting}
 
 \section{Flow}
