@@ -1,30 +1,31 @@
 digraph {
-    pre [label=Preconnection];
     con [label=Connection];
-    list [label=Listener];
 
 
     subgraph cluster_list {
+        pre_list [label=Preconnection];
+        list [label=Listener];
         label="Listen for connections";
         solve_list [label="Solve properties",shape=box];
         bind [label=Bind,shape=box];
     }
 
     subgraph cluster_init {
+        pre_init [label=Preconnection];
         label="Initiate connection";
         solve [label="Solve properties",shape=box];
         resolve [label="DNS Resolve",shape=box];
         race [label="Race protocol stacks/addresses",shape=box];
     }
 
-    pre -> solve [label="Initiate"];
+    pre_init -> solve [label="Initiate"];
     solve -> resolve [label="If given domain",style=dashed];
     resolve -> race [style=dashed];
     race -> con;
 
     solve -> race [label="If given address",style=dashed];
 
-    pre -> solve_list [label="Listen"];
+    pre_list -> solve_list [label="Listen"];
     solve_list -> bind [style=dashed];
     bind -> list;
     list -> con [style=dashed,label="When connection received"];
