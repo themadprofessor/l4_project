@@ -162,3 +162,6 @@
 ### 29 Jan 2020
 * *0.5 hours* Add section on preconnection in the design section
 * *2 hours* Continue with design section
+
+### 2 Feb 2020
+* *5 hours* Continue with design section, clean up types, unify error types, add impl trait
