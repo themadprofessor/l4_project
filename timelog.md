@@ -167,4 +167,12 @@
 * *5 hours* Continue with design section, clean up types, unify error types, add impl trait
 
 ## Week Something + 3
+
+### 7 Feb 2020
+* *1 hour* Add getters for endpoints to connection and listner
+
+## Week Something + 4
+
+### 10 Feb 2020
 * 1 hour* Grammer checking and emph more types
+* 2 hours* Add section on Endpoint trait, and add more code blocks
