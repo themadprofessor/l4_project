@@ -369,7 +369,7 @@ the design decisions made for each object.
 The API will be expressed primarily through abstract types with multiple possible concrete implementations.
 Users of the API will operate almost exclusively with the traits (abstract types) in order to allow the underlying
 implementation and protocol stack to change with minimal changes to the user's code.
-If the API was defined with concrete types through the use of structs, the underlying implementation which handles the
+If the API was defined with concrete types through the use of structs, the underlying implementation which handles
 the native network would not be able to change without major changes to the user's code.
 Due to Rust's heavy use of monomorphisation and lack of runtime generics, for the API to be able to be dynamically
 linked into user applications and distributed separately, the traits will be used through trait objects.
@@ -398,8 +398,8 @@ The \emph{Preconnection} type will be defined as a concrete struct, rather than 
 \emph{Connection} types.
 Since a \emph{Preconnection} is a configuration type which is intended to be independent of the underlying
 implementation, using a trait would be redundant as each underlying implementation would implement the trait identically.
-Furthermore, due to issues with the Rust compiler, its difficult to change generic parameters with trait methods.
-Figure \ref{lst:preconnection} shows the defintion for the \emph{Preconnection} struct and the generic parameters it has.
+Furthermore, due to issues with the Rust compiler, it's difficult to change generic parameters with trait methods.
+Figure \ref{lst:preconnection} shows the definition for the \emph{Preconnection} struct and the generic parameters it has.
 The generic parameters L and R are used to represent the possible local and remote endpoints respectively.
 Endpoint state is a marker (empty) trait which is implemented for the empty struct NoEndpoint and any type which
 implements the Endpoint trait (See Figure \ref{nan}).
@@ -410,14 +410,14 @@ The initiate and listen methods require L and R respectively to be a type other 
 This allows the Rust compiler to enforce these constraints, rather than run time checks.
 The underlying implementation which provides the \emph{Connection} and \emph{Listener} implementations will be specified
 by the I generic parameter, which implements the \emph{Impl} trait.
-The \emph{Impl} trait is an primarily an internal trait as it specifies the underlying implementation, but is public to
+The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is public to
 allow the end user to select from multiple implementations, and create custom implementations.
-One method to utilise the \emph{Impl} is to have the methods take either \texttt{\&mut self} or \texttt{\&self}, and
+One method to utilise the \emph{Implementation} is to have the methods take either \texttt{\&mut self} or \texttt{\&self}, and
 pass the implementation as a parameter when constructing a \emph{Preconnection}.
 This would require the end user to always specify an implementation when constructing a \emph{Preconnection}, even when
 using the default implementation.
 See Listing \ref{lst:preconnBad} for an example of this method.
-An alternative method is to have the \emph{Impl} methods not take \texttt{self} in any form, and using it as a marker.
+An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a marker.
 This would allow the \emph{Preconnection} can specify a default implementation using Rust's default generic parameter.
 See Listing \ref{lst:preconnGood} for two examples of this method.
 
@@ -484,19 +484,19 @@ where
 }
 \end{lstlisting}
 
-The Listener trait represents a type which is listening for Connections asynchronously.
-One approach to design this trait is to define the trait with a method which returns a Future that resolves into a
+The \emph{Listener} trait represents a type which is listening for \emph{Connection}s asynchronously.
+One approach to design this trait is to define the trait with a method which returns a \texttt{Future} that resolves into a
 Connection when one is received.
-An issue with this design is it does not represent a Listener as what it is.
-Conceptually a Listener is an asynchronous stream of Connections, and this design represents a Listener as an object
-which is idle until the user requests a Connection.
+An issue with this design is it does not represent a \emph{Listener} as what it is.
+Conceptually a \emph{Listener} is an asynchronous stream of \emph{Connection}s, and this design represents a \emph{Listener} as an object
+which is idle until the user requests a \emph{Connection}.
 At this point it then begins to listen for incoming connections, which could lead to lost connections.
-A better design is to have all implementations of the Listener trait also implement the Stream trait from the futures
+A better design is to have all implementations of the \emph{Listener} trait also implement the \texttt{Stream} trait from the futures
 crate.
-This allows a Listener to make use of the existing Stream ecosystem, such as the StreamExt trait, which provides an
-Iterator-style interface to a Stream.
-As shown in Listing \ref{lst:listener}, the implementation for the Stream trait is required to produce an Item which
-either a Connection or an Error.
+This allows a \emph{Listener} to make use of the existing \texttt{Stream} ecosystem, such as the \texttt{StreamExt} trait, which provides an
+\texttt{Iterator}-style interface to a \texttt{Stream}.
+As shown in Listing \ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item which
+either a \emph{Connection} or an \emph{Error}.
 
 \begin{lstlisting}[language=Rust, float=h, label=lst:listener, caption={The Listener trait, showing the Stream
     implementation requirement for all implementers.}]
@@ -543,7 +543,7 @@ which created, so a \emph{Framer} must be able to be accessed from different thr
 Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
 lifetime of the function.
 \texttt{Future}s require all types which are used within the \texttt{Future} must live longer than the \texttt{Future}.
-Since a \texttt{Future} can take an inderminate length of time to complete, all \emph{Framer}s must have a static
+Since a \texttt{Future} can take an indeterminate length of time to complete, all \emph{Framer}s must have a static
 lifetime, which means it lives for the lifetime of the program.
 An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
 Using different types for framing and deframing means the end user cannot accidentally send the data they have received

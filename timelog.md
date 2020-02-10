@@ -165,3 +165,6 @@
 
 ### 2 Feb 2020
 * *5 hours* Continue with design section, clean up types, unify error types, add impl trait
+
+## Week Something + 3
+* 1 hour* Grammer checking and emph more types
