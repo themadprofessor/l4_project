@@ -174,5 +174,17 @@
 ## Week Something + 4
 
 ### 10 Feb 2020
-* 1 hour* Grammer checking and emph more types
-* 2 hours* Add section on Endpoint trait, and add more code blocks
+* *1 hour* Grammer checking and emph more types
+* *2 hours* Add section on Endpoint trait, and add more code blocks
+
+## Another Week Something
+
+### 23 Feb 2020
+* *3 hours* Attempt to understand nom's streaming parsers
+
+## Another Week Something + 1
+
+### 24 Feb 2020
+* *3 hours* Attempt to fix type errors from framer redesign and fix racing
+* *2 hours* Add section on framer errors, change framer associated types to generic params, comment rubbish
+

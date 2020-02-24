@@ -1,78 +1,87 @@
 
-@article{khademi_neat_2017,
-  title = {{{NEAT}}: {{A Platform}}- and {{Protocol}}-{{Independent Internet Transport API}}},
-  volume = {55},
-  issn = {0163-6804},
-  shorttitle = {{{NEAT}}},
-  language = {en},
-  number = {6},
-  urldate = {2019-09-25},
-  journal = {IEEE Communications Magazine},
-  url = {http://ieeexplore.ieee.org/document/7945852/},
-  doi = {10.1109/MCOM.2017.1601052},
-  author = {Khademi, Naeem and Ros, David and Welzl, Michael and Bozakov, Zdravko and Brunstrom, Anna and Fairhurst, Gorry and Grinnemo, Karl-Johan and Hayes, David and Hurtig, Per and Jones, Tom and Mangiante, Simone and Tuxen, Michael and Weinrank, Felix},
-  year = {2017},
-  pages = {46-54},
-  file = {/home/stuart/Zotero/storage/JBG879FL/Khademi et al. - 2017 - NEAT A Platform- and Protocol-Independent Interne.pdf}
-}
-
-@techreport{pauly_architecture_2019,
-  type = {Internet-{{Draft}}},
-  title = {An {{Architecture}} for {{Transport Services}}},
-  abstract = {This document provides an overview of the architecture of Transport Services, a model for exposing transport protocol features to applications for network communication. In contrast to what is provided by most existing Application Programming Interfaces (APIs), Transport Services is based on an asynchronous, event-driven interaction pattern; it uses messages for representing data transfer to applications; and it assumes an implementation that can use multiple IP addresses, multiple protocols, and multiple paths, and provide multiple application streams. This document further defines the common set of terminology and concepts to be used in definitions of Transport Services APIs and implementations.},
-  number = {draft-ietf-taps-arch-04},
-  institution = {{Internet Engineering Task Force}},
-  url = {https://datatracker.ietf.org/doc/html/draft-ietf-taps-arch-04},
-  author = {Pauly, Tommy and Trammell, Brian and Brunstrom, Anna and Fairhurst, Gorry and Perkins, Colin and Tiesel, Philipp S. and Wood, Christopher A.},
-  month = jul,
-  year = {2019}
-}
-
 @techreport{brunstrom_implementing_2019,
-  type = {Internet-{{Draft}}},
   title = {Implementing {{Interfaces}} to {{Transport Services}}},
-  abstract = {The Transport Services architecture [I-D.ietf-taps-arch] defines a system that allows applications to use transport networking protocols flexibly. This document serves as a guide to implementation on how to build such a system.},
-  number = {draft-ietf-taps-impl-04},
+  author = {Brunstrom, Anna and Pauly, Tommy and Enghardt, Theresa and Grinnemo, Karl-Johan and Jones, Tom and Tiesel, Philipp S. and Perkins, Colin and Welzl, Michael},
+  year = {2019},
+  month = jul,
   institution = {{Internet Engineering Task Force}},
   url = {https://datatracker.ietf.org/doc/html/draft-ietf-taps-impl-04},
-  author = {Brunstrom, Anna and Pauly, Tommy and Enghardt, Theresa and Grinnemo, Karl-Johan and Jones, Tom and Tiesel, Philipp S. and Perkins, Colin and Welzl, Michael},
-  month = jul,
-  year = {2019}
+  abstract = {The Transport Services architecture [I-D.ietf-taps-arch] defines a system that allows applications to use transport networking protocols flexibly. This document serves as a guide to implementation on how to build such a system.},
+  number = {draft-ietf-taps-impl-04},
+  type = {Internet-{{Draft}}}
 }
 
-@techreport{trammell_abstract_2019,
-  type = {Internet-{{Draft}}},
-  title = {An {{Abstract Application Layer Interface}} to {{Transport Services}}},
-  abstract = {This document describes an abstract programming interface to the transport layer, following the Transport Services Architecture. It supports the asynchronous, atomic transmission of messages over transport protocols and network paths dynamically selected at runtime. It is intended to replace the traditional BSD sockets API as the lowest common denominator interface to the transport layer, in an environment where endpoints have multiple interfaces and potential transport protocols to select from.},
-  number = {draft-ietf-taps-interface-04},
-  institution = {{Internet Engineering Task Force}},
-  url = {https://datatracker.ietf.org/doc/html/draft-ietf-taps-interface-04},
-  author = {Trammell, Brian and Welzl, Michael and Enghardt, Theresa and Fairhurst, Gorry and K{\"u}hlewind, Mirja and Perkins, Colin and Tiesel, Philipp S. and Wood, Christopher A. and Pauly, Tommy},
-  month = jul,
-  year = {2019}
+@misc{geal_nomerr_nodate,
+  title = {Nom::{{Err}} - {{Rust}}},
+  author = {{Geal}},
+  url = {https://docs.rs/nom/5.1.1/nom/enum.Err.html},
+  urldate = {2020-02-24},
+  file = {/home/stuart/Zotero/storage/6KCGLBEA/enum.Err.html},
+  journal = {nom::Err - Rust}
 }
 
 @misc{kalbnik_rust_nodate,
   title = {The {{Rust Programming Language}}},
   shorttitle = {Rust},
-  abstract = {The Rust programming language helps you write faster, more reliable software. High-level ergonomics and low-level control are often at odds in programming language design; Rust challenges that conflict. Through balancing powerful technical capacity and a great developer experience, Rust gives you the option to control low-level details (such as memory usage) without all the hassle traditionally associated with such control.},
-  language = {en},
-  urldate = {2019-11-04},
-  journal = {The Rust Programming Language},
-  url = {https://doc.rust-lang.org/book/},
   author = {Kalbnik, Steve and Nichols, Carol and Rust Community},
   year = {n.d.},
-  file = {/home/stuart/Zotero/storage/G9RJNDFA/book.html}
+  url = {https://doc.rust-lang.org/book/},
+  urldate = {2019-11-04},
+  abstract = {The Rust programming language helps you write faster, more reliable software. High-level ergonomics and low-level control are often at odds in programming language design; Rust challenges that conflict. Through balancing powerful technical capacity and a great developer experience, Rust gives you the option to control low-level details (such as memory usage) without all the hassle traditionally associated with such control.},
+  file = {/home/stuart/Zotero/storage/G9RJNDFA/book.html},
+  journal = {The Rust Programming Language},
+  language = {en}
+}
+
+@article{khademi_neat_2017,
+  title = {{{NEAT}}: {{A Platform}}- and {{Protocol}}-{{Independent Internet Transport API}}},
+  shorttitle = {{{NEAT}}},
+  author = {Khademi, Naeem and Ros, David and Welzl, Michael and Bozakov, Zdravko and Brunstrom, Anna and Fairhurst, Gorry and Grinnemo, Karl-Johan and Hayes, David and Hurtig, Per and Jones, Tom and Mangiante, Simone and Tuxen, Michael and Weinrank, Felix},
+  year = {2017},
+  volume = {55},
+  pages = {46--54},
+  issn = {0163-6804},
+  doi = {10.1109/MCOM.2017.1601052},
+  url = {http://ieeexplore.ieee.org/document/7945852/},
+  urldate = {2019-09-25},
+  file = {/home/stuart/Zotero/storage/JBG879FL/Khademi et al. - 2017 - NEAT A Platform- and Protocol-Independent Interne.pdf},
+  journal = {IEEE Communications Magazine},
+  language = {en},
+  number = {6}
+}
+
+@techreport{pauly_architecture_2019,
+  title = {An {{Architecture}} for {{Transport Services}}},
+  author = {Pauly, Tommy and Trammell, Brian and Brunstrom, Anna and Fairhurst, Gorry and Perkins, Colin and Tiesel, Philipp S. and Wood, Christopher A.},
+  year = {2019},
+  month = jul,
+  institution = {{Internet Engineering Task Force}},
+  url = {https://datatracker.ietf.org/doc/html/draft-ietf-taps-arch-04},
+  abstract = {This document provides an overview of the architecture of Transport Services, a model for exposing transport protocol features to applications for network communication. In contrast to what is provided by most existing Application Programming Interfaces (APIs), Transport Services is based on an asynchronous, event-driven interaction pattern; it uses messages for representing data transfer to applications; and it assumes an implementation that can use multiple IP addresses, multiple protocols, and multiple paths, and provide multiple application streams. This document further defines the common set of terminology and concepts to be used in definitions of Transport Services APIs and implementations.},
+  number = {draft-ietf-taps-arch-04},
+  type = {Internet-{{Draft}}}
 }
 
 @misc{rust_team_rust_nodate,
   title = {Rust {{Programming Language}}},
-  abstract = {A language empowering everyone to build reliable and efficient software.},
-  language = {en-US},
-  urldate = {2019-11-06},
-  url = {https://www.rust-lang.org/},
   author = {Rust Team},
-  file = {/home/stuart/Zotero/storage/E4WUI8MJ/www.rust-lang.org.html}
+  url = {https://www.rust-lang.org/},
+  urldate = {2019-11-06},
+  abstract = {A language empowering everyone to build reliable and efficient software.},
+  file = {/home/stuart/Zotero/storage/E4WUI8MJ/www.rust-lang.org.html},
+  language = {en-US}
+}
+
+@techreport{trammell_abstract_2019,
+  title = {An {{Abstract Application Layer Interface}} to {{Transport Services}}},
+  author = {Trammell, Brian and Welzl, Michael and Enghardt, Theresa and Fairhurst, Gorry and K{\"u}hlewind, Mirja and Perkins, Colin and Tiesel, Philipp S. and Wood, Christopher A. and Pauly, Tommy},
+  year = {2019},
+  month = jul,
+  institution = {{Internet Engineering Task Force}},
+  url = {https://datatracker.ietf.org/doc/html/draft-ietf-taps-interface-04},
+  abstract = {This document describes an abstract programming interface to the transport layer, following the Transport Services Architecture. It supports the asynchronous, atomic transmission of messages over transport protocols and network paths dynamically selected at runtime. It is intended to replace the traditional BSD sockets API as the lowest common denominator interface to the transport layer, in an environment where endpoints have multiple interfaces and potential transport protocols to select from.},
+  number = {draft-ietf-taps-interface-04},
+  type = {Internet-{{Draft}}}
 }
 
 
