@@ -1,0 +1,350 @@
+In this section, we discuss the high level design of the API, without implementation specific details.
+First, a short discussion on the abstract nature of the API .
+Followed by the overall flow of the API will be discussed and how each of the main objects connect together.
+Then, each of the main objects in the API will be discussed in the order of the rough flow of the API, discussing
+the design decisions made for each object.
+
+The API will be expressed primarily through abstract types with multiple possible concrete implementations.
+Users of the API will operate almost exclusively with the traits (abstract types) in order to allow the underlying
+implementation and protocol stack to change with minimal changes to the user's code.
+If the API was defined with concrete types through the use of structs, the underlying implementation which handles
+the native network would not be able to change without major changes to the user's code.
+Due to Rust's heavy use of monomorphisation and lack of runtime generics, for the API to be able to be dynamically
+linked into user applications and distributed separately, the traits will be used through trait objects.
+Trait objects are Rust's method of dynamic dispatch and pseudo runtime generics.
+While using trait objects would add a performance overhead due to pointer indirection and dynamic dispatch, the benefit
+of dynamic linking and alternative distribution out ways this.
+
+\section{Flow}\label{sec:flow}
+As shown in Figure~\ref{fig:flow}, there are both asynchronous and synchronous sections of opening a \emph{Connection}.
+The asynchronous sections are when the program would have to carry out some I/O, for example binding a \emph{Listener}
+to a port, or establishing a \emph{Connection} to a remote device.
+The remaining sections are either a trivial object creation or solving properties, as such are synchronous.
+Solving properties can contain a concurrent implementation if the implementation deems this necessary.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{diagrams/flow}
+\caption{A diagram to show how the three main objects flow from one to another.
+Oval nodes are objects, rectangular nodes are states in the transition between objects, dashed arrows are
+asynchronous state changes, and solid arrows are synchronous state changes.}
+\label{fig:flow}
+\end{figure}
+
+\section{Abstract API}\label{sec:abstract-api}
+The \emph{Preconnection} type will be defined as a concrete struct, rather than a trait, unlike the \emph{Listener} and
+\emph{Connection} types.
+Since a \emph{Preconnection} is a configuration type which is independent of the underlying implementation, using a
+trait would be redundant as each underlying implementation would implement the trait identically.
+Furthermore, due to issues with the Rust compiler, it is difficult to change generic parameters with trait methods.
+Listing~\ref{lst:preconnection} shows the definition for the \emph{Preconnection} struct and the generic parameters it
+has.
+The generic parameters L and R are used to represent the possible local and remote endpoints respectively.
+Endpoint state is a marker (empty) trait which is implemented for the empty struct NoEndpoint and any type which
+implements the Endpoint trait (See Listing~\ref{lst:endpoint}).
+When a \emph{Preconnection} is created, L and R are both NoEndpoint.
+Once the \emph{Preconnection} is given a local or remote endpoint, L or R are changed to the type of the given endpoint,
+depending on if the endpoint is local or remote.
+The initiate and listen methods require L and R respectively to be a type other than NoEndpoint.
+This allows the Rust compiler to enforce these constraints, rather than run time checks.
+The underlying implementation which provides the \emph{Connection} and \emph{Listener} implementations will be specified
+by the I generic parameter, which implements the \emph{Implmentation} trait.
+The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
+public to allow the end user to select from multiple implementations, and create custom implementations.
+One method to utilise the \emph{Implementation} is to have the methods take either \texttt{\&mut self} or
+\texttt{\&self}, and pass the implementation as a parameter when constructing a \emph{Preconnection}.
+This would require the end user to always specify an implementation when constructing a \emph{Preconnection}, even when
+using the default implementation.
+See Listing~\ref{lst:preconnBad} for an example of this method.
+An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a
+marker.
+This would allow the \emph{Preconnection} can specify a default implementation using Rust's default generic parameter.
+See Listing~\ref{lst:preconnGood} for two examples of this method, the first \emph{Preconnection} is an example of using
+the default implementation, and the second \emph{Preconnection} shows how a custom implementation would be specified.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
+    generic parameters.}]
+pub struct Preconnection<F, L, R, SD, SR, I=DefaultImpl>
+where
+    F: Framer<SD, SR,
+    L: EndpointState,
+    R: EndpointState,
+    I: Impl
+{
+    local: L,
+    remote: R,
+    framer: F,
+    trans: TransportProperties,
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:impl, caption={The Implementation trait.}]
+pub trait Implementation {
+    async fn connection<F, L, R>(
+        framer: F,
+        local: Option<L>,
+        remote: R,
+        props: &TransportProperties,
+    ) -> Result<Box<dyn Connection<F>>, Error>
+    where
+        F: Framer + Clone,
+        L: Endpoint,
+        R: Endpoint;
+
+    async fn listener<F, L, R>(
+        framer: F,
+        local: L,
+        remote: Option<R>,
+        props: &TransportProperties,
+    ) -> Result<Box<dyn Listener<F, Item = Result<Box<dyn Connection<F>>, Error>>>, Error>
+    where
+        F: Framer,
+        L: Endpoint,
+        R: Endpoint;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:preconnBad, caption={An example of how to construct a
+Preconnection if the Implementation trait is to be passed when the Preconnection is constructed}]
+fn example() {
+    let preconnection = Preconnection::new(Tokio, TransportProperties::default(), ...);
+    ...
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:preconnGood, caption={An example of how to construct a
+    Preconnection if the Implementation trait is used as a marker.}]
+fn example() {
+    let preconnection = Preconnection::new(TransportProperties::default(), ...);
+    let custom_impl_preconn = Preconnection::<_,_,_,Tokio>::new(TransportProperties::default(), ...);
+    ...
+}
+\end{lstlisting}
+
+The \emph{Connection} will be defined as a trait, and will be constructed with the \emph{Preconnection} object's
+initiate method.
+As shown in Listing~\ref{lst:connection}, the close and abort methods take \texttt{Box<Self>} rather than \texttt{Self}.
+Since \emph{Connection} is to be a trait object, it must be object safe.
+An object safe trait, must not require implementations to be sized, not have any methods which consume \texttt{Self}, no
+associated constants and all supertraits must be object safe.
+As such, for the close and abort methods cannot take \texttt{Self}, instead take \texttt{Box<Self>} since it is sized
+and does not require \texttt{Self} to be sized.
+These methods consume \texttt{Box<Self>} because the Rust compiler can ensure no other variable has ownership of the
+\emph{Connection} when it is closed or aborted, preventing the \emph{Connection} to be used after its closed or aborted.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:connection, caption={The Connection trait.}]
+pub trait Connection<F, S, R>
+where
+    F: Framer<S, R>
+{
+    async fn send(&mut self, data: S) -> Result<(), Self::Error>
+    where
+        S: Encode;
+
+    async fn receive(&mut self) -> Result<R, Self::Error>
+    where
+        R: Decode;
+
+    async fn close(self: Box<Self>) -> Result<(), Self::Error>;
+
+    fn abort(self: Box<Self>);
+}
+\end{lstlisting}
+
+The \emph{Listener} trait represents a type which is listening for \emph{Connection}s asynchronously.
+One approach to design this trait is to define the trait with a method which returns a \texttt{Future} that resolves
+into a Connection when one is received.
+An issue with this design is it does not represent a \emph{Listener} as what it is.
+Conceptually a \emph{Listener} is an asynchronous stream of \emph{Connection}s, and this design represents a
+\emph{Listener} as an object which is idle until the user requests a \emph{Connection}.
+At this point it then begins to listen for incoming connections, which could lead to lost connections.
+A better design is to have all implementations of the \emph{Listener} trait also implement the \texttt{Stream} trait
+from the futures crate.
+This allows a \emph{Listener} to make use of the existing \texttt{Stream} ecosystem, such as the \texttt{StreamExt}
+trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
+As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
+which either a \emph{Connection} or an \emph{Error}.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:listener, caption={The Listener trait, showing the Stream
+    implementation requirement for all implementers.}]
+pub trait Listener<F, S, R>: Stream<Item = Result<Box<dyn Connection<F, S, R>>, Error>>
+where
+    F: Framer,
+{
+    fn connection_limit(&mut self, limit: usize);
+}
+
+\end{lstlisting}
+
+The \emph{Connection} and \emph{Listener} traits and the \emph{Preconnection} struct will be generic over the framer
+used to frame the data which the connections will be operating on.
+This will ensure the \emph{Connections} can only handle a specific strongly-typed data trait.
+All methods on the \emph{Connection} trait which either receive data or send data will utilise this generic parameter in
+their return value and parameters respectively.
+The \emph{Preconnection}'s listen and initiate methods will pass this generic parameter to the new \emph{Listener}
+object or \emph{Connection} object respectively.
+An alternative approach is to have the traits generic over the data which the \emph{Connections} will be operating on.
+The issue with this approach is the compiler cannot ensure a \emph{Connection} has certain properties which methods
+could rely on.
+For example, a method could require a \emph{Connection} which is framed with TLS .
+If the \emph{Connection} is generic over the \emph{Framer}, the compiler can ensure only \emph{Connections} which are
+framed with TLS are used, ensuring the data being transmitted is encrypted.
+Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \emph{Connections}
+with \emph{Framers} which have specific properties can be used with certain methods.
+
+\subsection{Framer, Encode and Decode}\label{subsec:framer-encode-and-decode}
+
+A \emph{Framer} trait defines a type which can frame and deframe a given piece of data, as well as optionally store
+metadata for use in framing and deframing.
+The \emph{Framer} must be generic over the data types it will frame and deframe.
+By having a \emph{Framer} be generic over both the data it can frame and deframe, different types can be used for input
+and output, removing the chance of the end user using the incorrect data.
+Initially, the Input and Output types were defined as associated types.
+This allowed the implementation specify the accepted types, rather than the end user, which restricts the possibilities
+for framers to be generic over arbitrary types for the end user.
+For example, a HTTP framer would only be able to send an implementation specific type.
+Listing~\ref{lst:framer} shows the Input and Output types as generic types.
+The MetaKey and MetaValue types are associated types because they should not be specified by the end user.
+All implementations of \emph{Framer} must implement \texttt{Send} and \texttt{Sync}, as well the type definition having
+a static lifetime.
+\texttt{Send} and \texttt{Sync} are required to allow the \emph{Framer} to be passed between threads and accessed from
+different threads.
+While a \texttt{Future} does not specify it will be executed on a different thread than it was created, but it allows
+it so a \emph{Framer} must be able to be passed to another thread.
+Since \emph{Framer}'s methods use \texttt{&mut self}, a \emph{Framer} maybe accessed by a thread other than the thread
+which created, so a \emph{Framer} must be able to be accessed from different threads.
+Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
+lifetime of the function.
+\texttt{Future}s require all types which are used within the \texttt{Future} must live longer than the \texttt{Future}.
+Since a \texttt{Future} can take an indeterminate length of time to complete, all \emph{Framer}s must have a static
+lifetime, which means it lives for the lifetime of the program.
+An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
+Using different types for framing and deframing means the end user cannot accidentally send the data they have received
+back to the sender.
+A HttpRequest object and HttpResponse object would contain a type which implements the Encode and Decode trait
+respectively.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
+    requirements for all implementers, and associated types.}]
+pub trait Framer<S, R>: Send + Sync + 'static {
+    type MetaKey;
+    type MetaValue;
+    type Error: StdError + Send;
+
+    fn frame(&mut self, item: S, dst: &mut BytesMut) -> Result<(), Self::Error>
+    where
+        S: Encode;
+
+    fn deframe(&mut self, src: &[u8]) -> Result<(R, &[u8]), (&[u8], Error<Self::Error>)>
+    where
+        R: Decode;
+
+    fn add_metadata(&mut self, key: Self::MetaKey, value: Self::MetaValue);
+}
+\end{lstlisting}
+
+Data which can be framed or deframed must be able to be encoded or decoded from raw bytes if it is to be a
+\emph{Framer}'s input and output data trait respectively.
+As such they must implement \emph{Encode} trait and/or a \emph{Decode} trait, which define a type which can be encoded
+into bytes and decoded from raw bytes respectively.
+As shown in Listing~\ref{lst:encode} the \emph{Encode} trait should also provide a hint to the encoded size of the type,
+to allow for memory to be preallocated if required.
+A default implementation of this method is provided since this is used solely for optimisation.
+Both \emph{Encode} and \emph{Decode} will have an associated error type, which must implement both \texttt{Send} and
+\texttt{Error}.
+This error type will be use for the \texttt{Err} variant of the returned results from the decode or encode methods.
+Requiring the type to implement the \texttt{Error} trait ensures the type is a valid error, and the \texttt{Send} trait
+ensures the type can be sent between threads, which may occur with \texttt{Future}s.
+Allowing an implementation of the \emph{Encode} or \emph{Decode} traits to return their own error type makes
+implementing the trait simpler as the implementation does not have to convert their error types into a TAPS error.
+There exists the \emph{Serialize} and \emph{Deserialize} traits from the Serde trait, which appear to be similar to
+\emph{Encode} and \emph{Decode}.
+The aim of Serde's traits it to map between an Rust's data model and Serde's data model.
+Serde's data model is designed to be used in conjunction with existing data formats, rather than an arbitrary collection
+of bytes.
+Therefore, the \emph{Encode} and \emph{Decode} traits are needed to map between typed, structured data and raw bytes.
+Serde's trait would be used in \emph{Framers} to convert structured data to and from a particular data format, which is
+then framed for sending and deframed when read.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:encode, caption={The Encode trait, showing the size\_hint method.}]
+pub trait Encode {
+    type Error: Send + Error;
+
+    fn encode(&self, data: &mut BytesMut) -> Result<(), Self::Error>;
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, None)
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:decode, caption={The Decode trait.}]
+pub trait Decode {
+    type Error: Send + Error;
+
+    fn decode(data: &[u8]) -> Result<(&[u8], Self), (&[u8], Error<Self::Error>)>;
+}
+\end{lstlisting}
+
+In order to handle incomplete data when receiving data from a \emph{Connection}, the error type for both the
+\emph{Framer}'s \texttt{deframe} and \emph{Decode}'s \texttt{decode} methods must indicate this.
+As shown in Listings~\ref{lst:decode} and~\ref{lst:framer}, the returned error types are wrapped in \texttt{Error},
+which is defined as shown in Listing~\ref{lst:codecError}.
+This is based of the method used by~\cite{geal_nomerr_nodate} for the nom crate.
+If the \emph{Framer} or \emph{Decode} runs out of data while deframing or decoding respectively, it will return a
+\texttt{Error::Incomplete}, to signify to the \emph{Connection} to get more data.
+Both the \texttt{decode} and \texttt{deframe} methods \texttt{Ok} and \texttt{Err} also contain the remaining data which
+has not be used from the input.
+The returned bytes will be then passed up to either the \emph{Framer} or \emph{Connection} from the \texttt{decode} or
+\texttt{deframe} methods respectively, and used for the next call of the methods where applicable.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:codecError, caption={The Error type for deframe and decode methods,
+    showing the Incomplete varient.}]
+pub enum Error<E> {
+    Err(E),
+    Incomplete
+}
+\end{lstlisting}
+
+\section{Application Layer Protocols}\label{sec:application-layer-protocols}
+Application layer protocols have requirements for the protocol stack they operate on, such as HTTP requiring a reliable
+protocol stack.
+A \emph{Protocol} type must specify the protocol stack requirements required for the protocol.
+This could be represented as a concrete \emph{Protocol} enum, with the variants being the application layer protocols
+supported by the API .
+The main issue with this approach is only the protocols implemented by the API can be used with the API .
+One of the issues discussed with the existing sockets API was how it restricted the uptake of new protocols, which this
+approach would replicate, therefore it will not be used.
+Another approach is to define an abstract \emph{Protocol} type as a trait, with a method to create a default
+\emph{Preconnection} for the protocol.
+This would allow third-party crates to add application layer protocols without the API to be updated.
+
+\begin{lstlisting}[language=Rust, float=h, label=lst:protocol, caption={The Protocol trait, add more info here}]
+pub trait Protocol {
+    fn preconnection() -> Preconnection<F>
+    where
+        F: Framer;
+}
+\end{lstlisting}
+
+
+\section{Connection Racing}\label{sec:connection-racing}
+Since the API is protocol-agnostic, there must be a mechanism of determining the protocol stack to use internally.
+Multiple protocol stacks can match the same set of transport properties.
+Furthermore, a DNS lookup can result in multiple IPv4 and IPv6 addresses.
+The combination of all matching protocol stacks and addresses will be raced to find the optimal stack.
+Protocol stacks will be ordered by how preferred they are according to the transport properties.
+For example, if the transport properties specifies reliability is preferred, reliable protocol stacks are ordered before
+unreliable protocol stacks.
+IP addresses received from a DNS lookup will be ordered according to the Happy Eyeballs version 2 algorithm.
+This specifies IPv4 and IPv6 addresses should be resolved asynchronously, prioritising IPv6 responses.
+If an IPv6 address resolves first, attempt to connect to the address, falling back to an IPv4 address if the connection
+failed.
+If an IPv4 address resolves first, delay the connection attempt until either an IPv6 address resolves and connects
+successfully, or period of time (Resolution Delay Period) has passed.
+Furthermore, prioritise addresses resolved from a DNS server with an IPv6 address.
+Once an address successfully connects, close connections still connecting, and do not attempt anymore connections.
+Utilising Happy Eyeballs version 2 the implementation to dynamically select the optimal address to connect to, while
+minimising the number of connections which need to be created to find the optimum.
+
+%==================================================================================================================================

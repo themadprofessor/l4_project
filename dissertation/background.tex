@@ -1,0 +1,77 @@
+\section{Rust}\label{sec:rust}
+Rust is a modern systems programming language, which aids developers "write faster, more reliable software", according
+to the Rust book (\cite{kalbnik_rust_nodate}).
+Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
+
+One major issue with writing system software is ownership.
+Who owns a resource, such as memory or file handles, and for how long.
+In higher level languages, a garbage collector will ensure no resources live longer than they are needed, often through
+the use of reference counting.
+Garbage collection does elevate the burden of resource management from the developer, but in return, the developer has
+much less control over resources, and the resources will live of a non-deterministic length of time with most garbage
+collectors.
+Languages like C and C++ require the programmer to manage resources, releasing them manually, leading to unreleased
+resources if implemented incorrectly.
+Rust enforces correct resource management by delegating all resource management to the compiler, through its borrow
+checker.
+Only a single entity can own a resource in Rust.
+All other entities must use references to interact with the resource.
+Furthermore, either a single mutable reference or an arbitrary number of immutable references can exist for a resource
+at once.
+These references cannot live longer than the entity owning the resource, which is enforced by the compiler.
+When a reference goes out of scope, it is freed.
+When an entity goes out of scope, there must be no remaining references to the entity, and the resources the entity owns
+are freed.
+Through this method, invalid references cannot exist, and it is impossible to release a resource which has already been
+released.
+A side effect of only allowing a single mutable reference, or an arbitrary number of immutable references, the compiler
+can guarantee a compiled program is data race free.
+This is because, only a single entity can modify a resource, while knowing no other entities can read the resource or
+modify the resource.
+
+Being a modern language, Rust provides some higher level concepts and construct to systems programming.
+While Rust is a statically typed language, it provides local type inference, allowing for cleaning code.
+Its type-system is inspired by other languages such as Haskell, as such a programmer can express a large amount of
+information through the types they use alone.
+Furthermore, Rust has support for higher-order functions, because functions are a first-class type.
+Functions, such as map and fold, are provided, not directly for collections of items, rather iterators.
+Iterators in Rust provide a functional method for working with collections of items, while providing performance similar
+to a comparable loop construct.
+
+Rust also emphasises its ability to provide "zero-cost abstractions".
+This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level
+constructs, allowing for code to be written faster and cleaner, without any performance impact.
+Another example is Rust's Option type, which is either Some wrapping an object, or None.
+This is equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as the
+type-system forces the programmer to check for the presence of an object.
+A Future in Rust is a type which is polled until it is complete.
+A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
+Rather than polling all the Futures manually, a runtime is used to manage the Futures.
+The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is
+polled.
+
+Recently, Rust introduced support for async/await syntax.
+A function can be marked as async, which changes the return type to be a Futures wrapping the original return type.
+When an async function reaches an await, the poll being used to progress the Future returns Pending, informing the
+runtime another Future should be polled.
+The Future will continue to return Pending until the Future being awaited completes, at which point the function will
+continue until the next await or the function returns.
+The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually
+handling Futures.
+
+%What did other people do, and how is it relevant to what you want to do?
+%\section{Guidance}
+%\begin{itemize}
+%    \item
+%      Don't give a laundry list of references.
+%    \item
+%      Tie everything you say to your problem.
+%    \item
+%      Present an argument.
+%    \item Think critically; weigh up the contribution of the background and put it in context.
+%    \item
+%      \textbf{Don't write a tutorial}; provide background and cite
+%      references for further information.
+%\end{itemize}
+
+%==================================================================================================================================
