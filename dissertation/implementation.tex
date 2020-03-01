@@ -1,3 +1,25 @@
+\newcommand{\asyncawait}{\texttt{async}/\texttt{await}}
+
+\section{Tokio}\label{sec:tokio}
+Asynchronous programming in Rust requires an asynchronous run-time to poll the futures produced from \texttt{async}
+functions.
+One of the first run-times was Tokio~\citep{tokio_community_tokio_nodate}, and has become the de-facto standard
+asynchronous runtime for Rust.
+Tokio existed prior to \asyncawait{} syntax as a runtime for futures directly.
+At the beginning of the project, Rust was still stabilising its \asyncawait{} syntax~\citep{withoutboats_async/await_nodate},
+so there was no
+complete and stable implementations of the asynchronous runtime.
+The closest was Tokio's unstable implementation, which was stabilised soon after Rust stabilising
+\asyncawait{}.
+Now there exists multiple asynchronous run-times with the three main ones being Tokio, async-std and actix-rt.
+Actix-rt provides an asynchronous runtime intened for use with the actor design pattern.
+This API will not follow this pattern, so will not use actix-rt.
+Async-std is a library which is modelled on Rust's own standard library with the intention of translating the standard
+library to be \asyncawait{} compatible.
+Where Tokio is intended to be a fully-featured asynchronous programming platform, async-std is a port of the existing
+standard library.
+Ultimately, Tokio is a more mature library with a much larger user base, so Tokio will be used over async-std.
+
 %What did you do to implement this idea, and what technical achievements did you make?
 %\section{Guidance}
 %You can't talk about everything. Cover the high level first, then cover important, relevant or impressive details.

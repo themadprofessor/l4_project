@@ -7,7 +7,8 @@
 % put any additional packages here
 %
 \usepackage{listings-rust}
-\lstset{language=Rust, style=colouredRust}
+\usepackage{dirtree}
+\lstset{language=Rust}
 
 \begin{document}
 
@@ -236,6 +237,35 @@ programming in mind.
 
 \begin{appendices}
     \chapter{Appendices}\label{ch:appendices}
+
+    \section{Structure of the Source Code}\label{sec:structure-of-the-source-code}
+    \dirtree{%
+        .1 /.
+        .2 connection.rs\DTcomment{Definition of Connection trait}.
+        .2 error.rs\DTcomment{Definition of TAPS errors}.
+        .2 implementation.rs\DTcomment{Definition of Implementation trait}.
+        .2 lib.rs.
+        .2 listener.rs\DTcomment{Definition of Listener trait}.
+        .2 preconnection.rs\DTcomment{Definition of the Preconnection struct}.
+        .2 resolve.rs\DTcomment{Definition of and implementations of the Endpoint trait}.
+        .2 codec\DTcomment{Encode, Decode and Framer traits and implementations}.
+        .3 mod.rs.
+        .3 decode.rs\DTcomment{Definition of and implementations of Decode trait}.
+        .3 encode.rs\DTcomment{Definition of and implementations of Encode trait}.
+        .3 error.rs\DTcomment{Definition of decode and deframe error type}.
+        .3 frame.rs\DTcomment{Definition of Framer trait}.
+        .2 properties.
+        .3 mod.rs\DTcomment{Definition of TransportProperties}.
+        .3 selection.rs\DTcomment{Definition of SelectionProperties}.
+        .2 tokio\DTcomment{Tokio implementation of traits}.
+        .3 mod.rs\DTcomment{Implementation of the Implementation trait}.
+        .3 connection.rs\DTcomment{Implementation of the Connection trait}.
+        .3 error.rs\DTcomment{Definition of Tokio specific errors}.
+        .3 race.rs\DTcomment{Connection racing}.
+        .3 listener.rs\DTcomment{Implementations of the Listener trait}.
+        .4 mod.rs.
+        .4 tcp.rs\DTcomment{TCP implementation of the Listener trait}.
+    }
 
 %Typical inclusions in the appendices are:
 %
