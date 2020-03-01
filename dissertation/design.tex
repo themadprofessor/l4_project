@@ -62,11 +62,11 @@ This would allow the \emph{Preconnection} can specify a default implementation u
 See Listing~\ref{lst:preconnGood} for two examples of this method, the first \emph{Preconnection} is an example of using
 the default implementation, and the second \emph{Preconnection} shows how a custom implementation would be specified.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
+\begin{lstlisting}[float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
     generic parameters.}]
-pub struct Preconnection<F, L, R, SD, SR, I=DefaultImpl>
+pub struct Preconnection<F, L, R, I=DefaultImpl>
 where
-    F: Framer<SD, SR,
+    F: Framer,
     L: EndpointState,
     R: EndpointState,
     I: Impl
@@ -78,7 +78,7 @@ where
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:impl, caption={The Implementation trait.}]
+\begin{lstlisting}[float=h, label=lst:impl, caption={The Implementation trait.}]
 pub trait Implementation {
     async fn connection<F, L, R>(
         framer: F,
@@ -104,7 +104,7 @@ pub trait Implementation {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:preconnBad, caption={An example of how to construct a
+\begin{lstlisting}[float=h, label=lst:preconnBad, caption={An example of how to construct a
 Preconnection if the Implementation trait is to be passed when the Preconnection is constructed}]
 fn example() {
     let preconnection = Preconnection::new(Tokio, TransportProperties::default(), ...);
@@ -112,7 +112,7 @@ fn example() {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:preconnGood, caption={An example of how to construct a
+\begin{lstlisting}[float=h, label=lst:preconnGood, caption={An example of how to construct a
     Preconnection if the Implementation trait is used as a marker.}]
 fn example() {
     let preconnection = Preconnection::new(TransportProperties::default(), ...);
@@ -132,7 +132,7 @@ and does not require \texttt{Self} to be sized.
 These methods consume \texttt{Box<Self>} because the Rust compiler can ensure no other variable has ownership of the
 \emph{Connection} when it is closed or aborted, preventing the \emph{Connection} to be used after its closed or aborted.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:connection, caption={The Connection trait.}]
+\begin{lstlisting}[float=h, label=lst:connection, caption={The Connection trait.}]
 pub trait Connection<F, S, R>
 where
     F: Framer<S, R>
@@ -165,7 +165,7 @@ trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
 As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
 which either a \emph{Connection} or an \emph{Error}.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:listener, caption={The Listener trait, showing the Stream
+\begin{lstlisting}[float=h, label=lst:listener, caption={The Listener trait, showing the Stream
     implementation requirement for all implementers.}]
 pub trait Listener<F, S, R>: Stream<Item = Result<Box<dyn Connection<F, S, R>>, Error>>
 where
@@ -224,7 +224,7 @@ back to the sender.
 A HttpRequest object and HttpResponse object would contain a type which implements the Encode and Decode trait
 respectively.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
+\begin{lstlisting}[float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
     requirements for all implementers, and associated types.}]
 pub trait Framer<S, R>: Send + Sync + 'static {
     type MetaKey;
@@ -266,7 +266,7 @@ Therefore, the \emph{Encode} and \emph{Decode} traits are needed to map between 
 Serde's trait would be used in \emph{Framers} to convert structured data to and from a particular data format, which is
 then framed for sending and deframed when read.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:encode, caption={The Encode trait, showing the size\_hint method.}]
+\begin{lstlisting}[float=h, label=lst:encode, caption={The Encode trait, showing the size\_hint method.}]
 pub trait Encode {
     type Error: Send + Error;
 
@@ -278,7 +278,7 @@ pub trait Encode {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:decode, caption={The Decode trait.}]
+\begin{lstlisting}[float=h, label=lst:decode, caption={The Decode trait.}]
 pub trait Decode {
     type Error: Send + Error;
 
@@ -298,7 +298,7 @@ has not be used from the input.
 The returned bytes will be then passed up to either the \emph{Framer} or \emph{Connection} from the \texttt{decode} or
 \texttt{deframe} methods respectively, and used for the next call of the methods where applicable.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:codecError, caption={The Error type for deframe and decode methods,
+\begin{lstlisting}[float=h, label=lst:codecError, caption={The Error type for deframe and decode methods,
     showing the Incomplete varient.}]
 pub enum Error<E> {
     Err(E),
@@ -319,7 +319,7 @@ Another approach is to define an abstract \emph{Protocol} type as a trait, with 
 \emph{Preconnection} for the protocol.
 This would allow third-party crates to add application layer protocols without the API to be updated.
 
-\begin{lstlisting}[language=Rust, float=h, label=lst:protocol, caption={The Protocol trait, add more info here}]
+\begin{lstlisting}[float=h, label=lst:protocol, caption={The Protocol trait, add more info here}]
 pub trait Protocol {
     fn preconnection() -> Preconnection<F>
     where
