@@ -160,6 +160,9 @@
 * *1 hour* Grammer checking and emph more types
 * *2 hours* Add section on Endpoint trait, and add more code blocks
 
+### 12 Feb 2020
+* *2 hours* Attempt to change encode/decode/framer to handle incomplete data
+
 ## Week 19
 ### 19 Feb 2020
 * *4 hours* Attempt to redesign framers

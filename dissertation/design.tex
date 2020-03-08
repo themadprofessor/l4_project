@@ -290,7 +290,7 @@ In order to handle incomplete data when receiving data from a \emph{Connection},
 \emph{Framer}'s \texttt{deframe} and \emph{Decode}'s \texttt{decode} methods must indicate this.
 As shown in Listings~\ref{lst:decode} and~\ref{lst:framer}, the returned error types are wrapped in \texttt{Error},
 which is defined as shown in Listing~\ref{lst:codecError}.
-This is based of the method used by~\cite{geal_nomerr_nodate} for the nom crate.
+This is based of the method used by~\cite{geal_nomerrrust_} for the nom crate.
 If the \emph{Framer} or \emph{Decode} runs out of data while deframing or decoding respectively, it will return a
 \texttt{Error::Incomplete}, to signify to the \emph{Connection} to get more data.
 Both the \texttt{decode} and \texttt{deframe} methods \texttt{Ok} and \texttt{Err} also contain the remaining data which

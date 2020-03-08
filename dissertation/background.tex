@@ -1,6 +1,6 @@
 \section{Rust}\label{sec:rust}
-Rust is a modern systems programming language, which aids developers "write faster, more reliable software", according
-to the Rust book (\cite{kalbnik_rust_nodate}).
+Rust is a modern systems programming language, which aids developers “write faster, more reliable software”, according
+to the Rust book (\cite{kalbnik_rustprogramminglanguage_}).
 Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
 
 One major issue with writing system software is ownership.
@@ -38,26 +38,28 @@ Functions, such as map and fold, are provided, not directly for collections of i
 Iterators in Rust provide a functional method for working with collections of items, while providing performance similar
 to a comparable loop construct.
 
-Rust also emphasises its ability to provide "zero-cost abstractions".
+Rust also emphasises its ability to provide “zero-cost abstractions”.
 This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level
 constructs, allowing for code to be written faster and cleaner, without any performance impact.
 Another example is Rust's Option type, which is either Some wrapping an object, or None.
-This is equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as the
-type-system forces the programmer to check for the presence of an object.
+This can be the equivalent to a NULL-pointer check in C, due to Rust's null-pointer optimisation, but is much safer as
+the type-system forces the programmer to check for the presence of an object.
 A Future in Rust is a type which is polled until it is complete.
 A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
 Rather than polling all the Futures manually, a runtime is used to manage the Futures.
 The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is
 polled.
 
-Recently, Rust introduced support for async/await syntax.
-A function can be marked as async, which changes the return type to be a Futures wrapping the original return type.
-When an async function reaches an await, the poll being used to progress the Future returns Pending, informing the
-runtime another Future should be polled.
+Recently, Rust introduced support for \texttt{async/await} syntax~\citep{withoutboats_asyncawaitnotation_}.
+A function can be marked as async, which changes the return type to be a Future wrapping the original return type.
+When an \texttt{async} function reaches an \texttt{await}, the poll being used to progress the Future returns Pending,
+informing the runtime this Future is incomplete and another Future should be polled.
 The Future will continue to return Pending until the Future being awaited completes, at which point the function will
 continue until the next await or the function returns.
 The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually
 handling Futures.
+
+\section{TAPS}\label{sec:taps}
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}

@@ -1,12 +1,12 @@
-\newcommand{\asyncawait}{\texttt{async}/\texttt{await}}
+\newcommand{\asyncawait}{\texttt{async/await}}
 
 \section{Tokio}\label{sec:tokio}
 Asynchronous programming in Rust requires an asynchronous run-time to poll the futures produced from \texttt{async}
 functions.
-One of the first run-times was Tokio~\citep{tokio_community_tokio_nodate}, and has become the de-facto standard
+One of the first run-times was Tokio~\citep{tokiocommunity_tokioasynchronousruntime_}, and has become the de-facto standard
 asynchronous runtime for Rust.
 Tokio existed prior to \asyncawait{} syntax as a runtime for futures directly.
-At the beginning of the project, Rust was still stabilising its \asyncawait{} syntax~\citep{withoutboats_async/await_nodate},
+At the beginning of the project, Rust was still stabilising its \asyncawait{} syntax~\citep{withoutboats_asyncawaitnotation_},
 so there was no
 complete and stable implementations of the asynchronous runtime.
 The closest was Tokio's unstable implementation, which was stabilised soon after Rust stabilising
@@ -121,91 +121,3 @@ Ultimately, Tokio is a more mature library with a much larger user base, so Toki
 %\caption{The Metropolis-Hastings MCMC algorithm for drawing samples from arbitrary probability distributions,
 %specialised for normal proposal distributions $q(x^\prime|x) = \mathcal{N}(x, \sigma^2)$. The symmetry of the normal distribution means the acceptance rule takes the simplified form.}\label{alg:metropolis}
 %\end{algorithm}
-%
-%\subsection{Tables}
-%
-%If you need to include tables, like Table \ref{tab:operators}, use a tool like https://www.tablesgenerator.com/ to generate the table as it is
-%extremely tedious otherwise.
-%
-%\begin{table}[]
-%    \caption{The standard table of operators in Python, along with their functional equivalents from the \texttt{operator} package. Note that table
-%    captions go above the table, not below. Do not add additional rules/lines to tables. }\label{tab:operators}
-%    %\tt
-%    \rowcolors{2}{}{gray!3}
-%    \begin{tabular}{@{}lll@{}}
-%    %\toprule
-%    \textbf{Operation}    & \textbf{Syntax}                & \textbf{Function}                            \\ %\midrule % optional rule for header
-%    Addition              & \texttt{a + b}                          & \texttt{add(a, b)}                                    \\
-%    Concatenation         & \texttt{seq1 + seq2}                    & \texttt{concat(seq1, seq2)}                           \\
-%    Containment Test      & \texttt{obj in seq}                     & \texttt{contains(seq, obj)}                           \\
-%    Division              & \texttt{a / b}                          & \texttt{div(a, b) }  \\
-%    Division              & \texttt{a / b}                          & \texttt{truediv(a, b) } \\
-%    Division              & \texttt{a // b}                         & \texttt{floordiv(a, b)}                               \\
-%    Bitwise And           & \texttt{a \& b}                         & \texttt{and\_(a, b)}                                  \\
-%    Bitwise Exclusive Or  & \texttt{a \textasciicircum b}           & \texttt{xor(a, b)}                                    \\
-%    Bitwise Inversion     & \texttt{$\sim$a}                        & \texttt{invert(a)}                                    \\
-%    Bitwise Or            & \texttt{a | b}                          & \texttt{or\_(a, b)}                                   \\
-%    Exponentiation        & \texttt{a ** b}                         & \texttt{pow(a, b)}                                    \\
-%    Identity              & \texttt{a is b}                         & \texttt{is\_(a, b)}                                   \\
-%    Identity              & \texttt{a is not b}                     & \texttt{is\_not(a, b)}                                \\
-%    Indexed Assignment    & \texttt{obj{[}k{]} = v}                 & \texttt{setitem(obj, k, v)}                           \\
-%    Indexed Deletion      & \texttt{del obj{[}k{]}}                 & \texttt{delitem(obj, k)}                              \\
-%    Indexing              & \texttt{obj{[}k{]}}                     & \texttt{getitem(obj, k)}                              \\
-%    Left Shift            & \texttt{a \textless{}\textless b}       & \texttt{lshift(a, b)}                                 \\
-%    Modulo                & \texttt{a \% b}                         & \texttt{mod(a, b)}                                    \\
-%    Multiplication        & \texttt{a * b}                          & \texttt{mul(a, b)}                                    \\
-%    Negation (Arithmetic) & \texttt{- a}                            & \texttt{neg(a)}                                       \\
-%    Negation (Logical)    & \texttt{not a}                          & \texttt{not\_(a)}                                     \\
-%    Positive              & \texttt{+ a}                            & \texttt{pos(a)}                                       \\
-%    Right Shift           & \texttt{a \textgreater{}\textgreater b} & \texttt{rshift(a, b)}                                 \\
-%    Sequence Repetition   & \texttt{seq * i}                        & \texttt{repeat(seq, i)}                               \\
-%    Slice Assignment      & \texttt{seq{[}i:j{]} = values}          & \texttt{setitem(seq, slice(i, j), values)}            \\
-%    Slice Deletion        & \texttt{del seq{[}i:j{]}}               & \texttt{delitem(seq, slice(i, j))}                    \\
-%    Slicing               & \texttt{seq{[}i:j{]}}                   & \texttt{getitem(seq, slice(i, j))}                    \\
-%    String Formatting     & \texttt{s \% obj}                       & \texttt{mod(s, obj)}                                  \\
-%    Subtraction           & \texttt{a - b}                          & \texttt{sub(a, b)}                                    \\
-%    Truth Test            & \texttt{obj}                            & \texttt{truth(obj)}                                   \\
-%    Ordering              & \texttt{a \textless b}                  & \texttt{lt(a, b)}                                     \\
-%    Ordering              & \texttt{a \textless{}= b}               & \texttt{le(a, b)}                                     \\
-%    % \bottomrule
-%    \end{tabular}
-%    \end{table}
-%\subsection{Code}
-%
-%Avoid putting large blocks of code in the report (more than a page in one block, for example). Use syntax highlighting if possible, as in Listing \ref{lst:callahan}.
-%
-%\begin{lstlisting}[language=python, float, caption={The algorithm for packing the $3\times 3$ outer-totalistic binary CA successor rule into a
-%    $16\times 16\times 16\times 16$ 4 bit lookup table, running an equivalent, notionally 16-state $2\times 2$ CA.}, label=lst:callahan]
-%    def create_callahan_table(rule="b3s23"):
-%        """Generate the lookup table for the cells."""
-%        s_table = np.zeros((16, 16, 16, 16), dtype=np.uint8)
-%        birth, survive = parse_rule(rule)
-%
-%        # generate all 16 bit strings
-%        for iv in range(65536):
-%            bv = [(iv >> z) & 1 for z in range(16)]
-%            a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p = bv
-%
-%            # compute next state of the inner 2x2
-%            nw = apply_rule(f, a, b, c, e, g, i, j, k)
-%            ne = apply_rule(g, b, c, d, f, h, j, k, l)
-%            sw = apply_rule(j, e, f, g, i, k, m, n, o)
-%            se = apply_rule(k, f, g, h, j, l, n, o, p)
-%
-%            # compute the index of this 4x4
-%            nw_code = a | (b << 1) | (e << 2) | (f << 3)
-%            ne_code = c | (d << 1) | (g << 2) | (h << 3)
-%            sw_code = i | (j << 1) | (m << 2) | (n << 3)
-%            se_code = k | (l << 1) | (o << 2) | (p << 3)
-%
-%            # compute the state for the 2x2
-%            next_code = nw | (ne << 1) | (sw << 2) | (se << 3)
-%
-%            # get the 4x4 index, and write into the table
-%            s_table[nw_code, ne_code, sw_code, se_code] = next_code
-%
-%        return s_table
-%
-%\end{lstlisting}
-
-%==================================================================================================================================
