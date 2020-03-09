@@ -172,7 +172,6 @@
 * *3 hours* Attempt to understand nom's streaming parsers
 
 ## Week 21
-
 ### 24 Feb 2020
 * *3 hours* Attempt to fix type errors from framer redesign and fix racing
 * *2 hours* Add section on framer errors, change framer associated types to generic params, comment rubbish
@@ -181,3 +180,14 @@
 ### 29 Feb 2020
 * *2 hours* Resolve the Unpin requirement for the racing fix
 * *3 hours* Attmept to impl http framer with new decode/deframe
+
+## Week 23
+### 2 Mar 2020
+* *4 hours* Continue http impl
+
+### 8 Mar 2020
+* *2 hours* Add impl section on connection racing
+
+## Week 24
+### 9 Mar 2020
+* *4 hours* Fix http implementation and test
