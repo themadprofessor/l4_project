@@ -1,0 +1,14 @@
+digraph {
+
+    user [label=User];
+    conn [label=Connection];
+    framer [label=Framer];
+    encode [label=Encode];
+    raw [label="Underlying Connection"];
+
+    user -> conn [label="1. send()"];
+    conn -> framer [label="2. Data receved"];
+    framer -> encode [label="3. Framed data"];
+    encode -> conn [label="4. Encoded data"];
+    conn -> raw [label="5. Send data"];
+}

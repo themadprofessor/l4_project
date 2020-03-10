@@ -1,0 +1,14 @@
+digraph {
+    user [label=User];
+    conn [label=Connection];
+    framer [label=Framer];
+    decode [label=Decoder];
+
+    user -> conn [label="1. recv()"];
+    conn -> framer [label="2. Data received"];
+    framer -> conn [label="3. Incomplete data"];
+    framer -> decode [label="4. Deframed data"];
+    decode -> framer [label="5. Incomplete data"];
+    decode -> conn [label="6. Decoded data"];
+    conn -> user [label="7. return data"];
+}
