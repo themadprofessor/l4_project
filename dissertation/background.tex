@@ -65,16 +65,19 @@ agnostic network access.
 It removes large amounts of existing boilerplate networking code, such as DNS resolution, and decouples the application
 from the protocols used.
 This allows for smaller application code bases, and increased uptake in alternative protocols.
+
 Existing network applications must specify the protocols they wish to use.
-NEAT does not allow the application to do this, rather NEAT determines a collection of suitable protocols internally.
+NEAT does not require the application to do this, rather NEAT determines a collection of suitable protocols internally
+either from a set of allowed protocols from the user or from all supported protocols.
 The collection is iterated over, attempting to open a connection with each protocol.
 If a connection is not established within a timeout, the next protocol is tried, but the existing attempts are not
 cancelled, rather the first successful connection attempt is used, irrespective of when it was attempted.
 This allows for alternative protocols to be attempted before conventional protocols, with minimal delay if the
 alternative protocols fail to connect.
+This technique is the same as Happy Eyeballs~\citep{pauly_happyeyeballsversion_}.
 
-\section{TAPS}\label{sec:taps}
-Transport Services~\citep{pauly_architecturetransportservices_2019} is proposed standard from the TAPS working group.
+%\section{TAPS}\label{sec:taps}
+%Transport Services~\citep{pauly_architecturetransportservices_2019} is proposed standard from the TAPS working group.
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}
