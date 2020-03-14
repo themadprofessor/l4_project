@@ -191,3 +191,7 @@
 ## Week 24
 ### 9 Mar 2020
 * *4 hours* Fix http implementation and test
+
+### 14 Mar 2020
+* *1 hour* Add section for framer clone and associated types
+* *3 hours* Add http server framer
