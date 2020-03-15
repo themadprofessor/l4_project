@@ -195,3 +195,6 @@
 ### 14 Mar 2020
 * *1 hour* Add section for framer clone and associated types
 * *3 hours* Add http server framer
+
+### 15 Mar 2020
+* *3 hours* Attempt to write c socket eval code
