@@ -1,0 +1,3 @@
+- Move intro to bg and reword
+- Look at Colin's github for a guide on intros
+- Listener description is too specific, needs big picture

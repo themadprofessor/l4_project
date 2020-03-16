@@ -12,6 +12,10 @@ the native network would not be able to change without major changes to the user
 Due to Rust's heavy use of monomorphisation and lack of runtime generics, for the API to be able to be dynamically
 linked into user applications and distributed separately, the traits will be used through trait objects.
 Trait objects are Rust's method of dynamic dispatch and pseudo runtime generics.
+All trait objects must be wrapped in \texttt{Box} and marked as \texttt{dyn}, for example
+\texttt{Box<dyn Connection>}, which leads to cluttered code.
+This can be mediated through type alias, so for example if \texttt{type ConnectionObj = Box<dyn Connection>;} was
+defined, \texttt{ConnectionObj} can be used instead.
 While using trait objects would add a performance overhead due to pointer indirection and dynamic dispatch, the benefit
 of dynamic linking and alternative distribution out ways this.
 
@@ -164,12 +168,17 @@ This allows a \emph{Listener} to make use of the existing \texttt{Stream} ecosys
 trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
 As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
 which either a \emph{Connection} or an \emph{Error}.
+For a \emph{Framer} to be given to a \emph{Listener}, a new version of it needs to be given to each \emph{Connection}
+received.
+As such, \emph{Framer}'s which can be used with the \emph{Listener} trait must implement \texttt{Clone}.
+Since \texttt{Clone}'s \texttt{clone} method allows arbitrary code, \emph{Framer}s which contain information which
+shouldn't be duplicated rather reconstructed, the implementation can do that as required.
 
 \begin{lstlisting}[float=h, label=lst:listener, caption={The Listener trait, showing the Stream
     implementation requirement for all implementers.}]
 pub trait Listener<F, S, R>: Stream<Item = Result<Box<dyn Connection<F, S, R>>, Error>>
 where
-    F: Framer,
+    F: Framer + Clone,
 {
     fn connection_limit(&mut self, limit: usize);
 }
@@ -199,11 +208,18 @@ metadata for use in framing and deframing.
 The \emph{Framer} must be generic over the data types it will frame and deframe.
 By having a \emph{Framer} be generic over both the data it can frame and deframe, different types can be used for input
 and output, removing the chance of the end user using the incorrect data.
-Initially, the Input and Output types were defined as associated types.
-This allowed the implementation specify the accepted types, rather than the end user, which restricts the possibilities
-for framers to be generic over arbitrary types for the end user.
-For example, a HTTP framer would only be able to send an implementation specific type.
-Listing~\ref{lst:framer} shows the Input and Output types as generic types.
+The Input and Output types are defined as associated types.
+This allowed the implementation specify the accepted types, rather than the end user, which allows an implementation to
+restrict what data it can send and receive.
+An alternative approach is to defined Input an Output as generic types on the frame and deframe methods respectively.
+This would allow the end user to pass an arbitrary type which implements a trait, which could be specified the by
+the implementation.
+Such an approach would make it very difficult to work with header information.
+For example, a HTTP framer would not be able to return the status code to the end user.
+Associated type mean the implementation can limit the types the end user can use to type which handle such header data.
+These types can contain their own generic parameters, for example a HTTPResponse object could have a generic type for
+the body of the response, which can be restricted to types which implement \emph{Decode}.
+Listing~\ref{lst:framer} shows the Input and Output types as associated types.
 The MetaKey and MetaValue types are associated types because they should not be specified by the end user.
 All implementations of \emph{Framer} must implement \texttt{Send} and \texttt{Sync}, as well the type definition having
 a static lifetime.
@@ -216,13 +232,14 @@ which created, so a \emph{Framer} must be able to be accessed from different thr
 Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
 lifetime of the function.
 \texttt{Future}s require all types which are used within the \texttt{Future} must live longer than the \texttt{Future}.
-Since a \texttt{Future} can take an indeterminate length of time to complete, all \emph{Framer}s must have a static
-lifetime, which means it lives for the lifetime of the program.
+Rust allows type to be defined within functions, so the type definition would live until the function returned.
+Since a \texttt{Future} can take an indeterminate length of time to complete, all \emph{Framer} type definitions must
+have a static lifetime, which means it lives for the lifetime of the program.
 An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
 Using different types for framing and deframing means the end user cannot accidentally send the data they have received
 back to the sender.
-A HttpRequest object and HttpResponse object would contain a type which implements the Encode and Decode trait
-respectively.
+A HttpRequest object and HttpResponse object would contain a type which implements the \emph{Encode} and \emph{Decode}
+trait respectively.
 
 \begin{lstlisting}[float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
     requirements for all implementers, and associated types.}]
