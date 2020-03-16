@@ -49,7 +49,11 @@ int main(int argc, char *argv[]) {
                     break;
                 }
             } else {
-                printf("connected to %s\n", get_ip_str(curr->ai_addr, buffer, INET6_ADDRSTRLEN));
+		if (curr->ai_family == AF_INET6) {
+		    printf("connected to [%s]:80\n", get_ip_str(curr->ai_addr, buffer, INET6_ADDRSTRLEN));
+		} else {
+		    printf("connected to %s:80\n", get_ip_str(curr->ai_addr, buffer, INET6_ADDRSTRLEN));
+		}
                 break;
             }
         }
@@ -95,7 +99,6 @@ int reorder_addrs(struct addrinfo** addrs) {
     struct addrinfo *root_v6 = NULL, *root_v4 = NULL, *tail_v6 = NULL, *tail_v4 = NULL, *curr;
 
     for (curr = *addrs; curr != NULL; curr = curr->ai_next) {
-        eprintf("Ordering an addr\n");
         if (curr->ai_family == AF_INET6) {
             if (root_v6 == NULL) {
                 root_v6 = curr;
