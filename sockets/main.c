@@ -27,13 +27,11 @@ int main(int argc, char *argv[]) {
 
         int sock = -1;
         for (curr = root; curr != NULL; curr = curr->ai_next) {
-            eprintf("Trying %s\n", get_ip_str(curr->ai_addr, buffer, INET6_ADDRSTRLEN));
             sock = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
             if (sock < 0) {
                 perror("failed to open socket");
                 continue;
             }
-            eprintf("Socket opened\n");
             error = connect(sock, curr->ai_addr, curr->ai_addrlen);
             if (error != 0) {
                 perror("failed to connect");

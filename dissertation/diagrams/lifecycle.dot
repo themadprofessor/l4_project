@@ -1,0 +1,39 @@
+digraph {
+    subgraph cluster_pre {
+        preconn [label=Preconnection];
+        local [label="Local Endpoint", shape=plain];
+        remote [label="Remote Endpoint", shape=plain];
+        props [label="Transport Properties", shape=plain];
+        framer [label=Framer];
+        list [label=Listener];
+    }
+
+    subgraph cluster_estab {
+        conn [label=Connection];
+        frame [label="frame()", shape=diamond];
+        deframe [label="deframe()", shape=diamond];
+        encode [label="encode()", shape=diamond];
+        decode [label="decode()", shape=diamond];
+        net1 [label=Network, shape=box];
+        net2 [label=Network, shape=box];
+    }
+
+    subgraph cluster_term {
+        term [label=Terminiate];
+    }
+
+    local -> preconn;
+    remote -> preconn;
+    props -> preconn;
+    framer -> preconn;
+    preconn -> conn [label="initiate()"];
+    preconn -> list [label="listen()"];
+    list -> conn [label="Connection received"];
+    conn -> frame [label="send()"];
+    frame -> encode [label="Framed"];
+    encode -> net1 [label="Encoded"];
+    net2 -> deframe [label="Data received"];
+    deframe -> decode [label="Deframed"];
+    decode -> conn [label="Decoded"];
+    conn -> term [label="close()/abort()"];
+}

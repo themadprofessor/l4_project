@@ -35,6 +35,14 @@ asynchronous state changes, and solid arrows are synchronous state changes.}
 \label{fig:flow}
 \end{figure}
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{diagrams/lidecycle}
+    \caption{A diagram to show a high-level view of the actions that occur during the lifecycle of a Connection object.
+    Method calls in italics are internal calls.}
+\end{figure}
+
+
 \section{Abstract API}\label{sec:abstract-api}
 The \emph{Preconnection} type will be defined as a concrete struct, rather than a trait, unlike the \emph{Listener} and
 \emph{Connection} types.
