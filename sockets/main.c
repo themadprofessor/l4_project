@@ -3,7 +3,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <libnet.h>
+#include <arpa/inet.h>
 
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
@@ -16,9 +16,10 @@ int main(int argc, char *argv[]) {
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_ADDRCONFIG;
+    hints.ai_socktype = SOCK_STREAM;
 
     for (int i = 1; i < argc; ++i) {
-        error = getaddrinfo(argv[i], NULL, &hints, &root);
+        error = getaddrinfo(argv[i], "80", &hints, &root);
         if (error != 0) {
             eprintf("Skipping %s: %s\n", argv[i], gai_strerror(error));
             continue;
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
         int sock = -1;
         for (curr = root; curr != NULL; curr = curr->ai_next) {
             eprintf("Trying %s\n", get_ip_str(curr->ai_addr, buffer, INET6_ADDRSTRLEN));
-            sock = socket(curr->ai_family, SOCK_STREAM | SOCK_CLOEXEC, curr->ai_protocol);
+            sock = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
             if (sock < 0) {
                 perror("failed to open socket");
                 continue;
