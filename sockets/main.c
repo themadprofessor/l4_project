@@ -8,6 +8,7 @@
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen);
+int reorder_addrs(struct addrinfo **addrs);
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *curr, *root;
@@ -22,6 +23,12 @@ int main(int argc, char *argv[]) {
         error = getaddrinfo(argv[i], "80", &hints, &root);
         if (error != 0) {
             eprintf("Skipping %s: %s\n", argv[i], gai_strerror(error));
+            continue;
+        }
+
+        if (reorder_addrs(&root) != 0) {
+            eprintf("failed to reorder addresses\n");
+            freeaddrinfo(root);
             continue;
         }
 
@@ -81,4 +88,44 @@ char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen) {
     }
 
     return s;
+}
+
+int reorder_addrs(struct addrinfo** addrs) {
+    int ret = 0;
+    struct addrinfo *root_v6 = NULL, *root_v4 = NULL, *tail_v6 = NULL, *tail_v4 = NULL, *curr;
+
+    for (curr = *addrs; curr != NULL; curr = curr->ai_next) {
+        eprintf("Ordering an addr\n");
+        if (curr->ai_family == AF_INET6) {
+            if (root_v6 == NULL) {
+                root_v6 = curr;
+            } else {
+                tail_v6->ai_next = curr;
+            }
+            tail_v6 = curr;
+        } else {
+            if (root_v4 == NULL) {
+                root_v4 = curr;
+            } else {
+                tail_v4->ai_next = NULL;
+            }
+            tail_v4 = curr;
+        }
+    }
+
+    if (tail_v4 != NULL) {
+        tail_v4->ai_next = NULL;
+    }
+
+    if (tail_v6 != NULL) {
+        tail_v6->ai_next = root_v4;
+        *addrs = root_v6;
+    } else if (tail_v4 != NULL) {
+        *addrs = root_v4;
+    } else {
+        // No addrs in list
+        ret = -1;
+    }
+
+    return ret;
 }
