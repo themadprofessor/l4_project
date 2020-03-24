@@ -51,13 +51,40 @@ The runtime is responsible for distributing the Futures among its worker poll if
 polled.
 
 Recently, Rust introduced support for \texttt{async/await} syntax~\citep{withoutboats_asyncawaitnotation_}.
-A function can be marked as async, which changes the return type to be a Future wrapping the original return type.
+A function can be marked as \texttt{async}, which changes the return type to be a \texttt{Future} wrapping the original
+return type.
 When an \texttt{async} function reaches an \texttt{await}, the poll being used to progress the Future returns Pending,
-informing the runtime this Future is incomplete and another Future should be polled.
-The Future will continue to return Pending until the Future being awaited completes, at which point the function will
-continue until the next await or the function returns.
+informing the runtime this \texttt{Future} is incomplete and another \texttt{Future} should be polled.
+The \texttt{Future} will continue to return \texttt{Pending} until the \texttt{Future} being awaited completes,
+at which point the function will continue until the next \texttt{await} or the function returns.
 The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually
-handling Futures.
+handling \texttt{Future}s.
+
+\section{Post Sockets}\label{sec:post-sockets}
+Post Sockets~\citep{kuhlewind_postsocketsabstract_} is an API intended to provide an asynchronous, message-orientated,
+transport-protocol independent networking API to be used instead of BSD Sockets (sockets).
+
+As~\cite{kuhlewind_postsocketsabstract_} explains, modern networked devices have multiple interfaces, which would
+provide natural support for multipath communications using protocols such as
+MPTCP~\citep{handley_tcpextensionsmultipath_}.
+The existing sockets API provides limited support for multipath communications, whereas Post Sockets has explicit
+support through its \emph{Configuration} object.
+Post Socket's \emph{Configuration} objects allow the user to specify a collection of possible protocol stack
+configurations.
+This provides the user with explicit control over the possible protocol stacks used, and the options each stack has.
+
+Rather than providing a byte-stream orientated API like sockets, Post Sockets exposes a message-orientated API .
+Typed messages would be given to or received from a \emph{Carrier} (protocol stack-independent object which sends and
+receives messages) as this allows both byte-stream and datagram oriented transport protocols to be supported.
+
+Another point raised by~\cite{kuhlewind_postsocketsabstract_} is layering encryption over the existing sockets API .
+Opening a TCP connection with Transport Layer Security (TLS) requires two handshakes to happen seqentially: the
+transport-layer handshake and the encryption-layer handshake, which increases latency.
+To avoid this Post Sockets defines an \emph{Association} object, which contains long-term state between a local endpoint
+and a remote endpoint.
+This can contain data such as pre-shared keys and cryptographic session resumption paramters.
+New \emph{Carrier}s can be created from an existing \emph{Association} object, removing the need to repeat an
+ecryption-layer handshake between the same local endpoint and remote endpoint.
 
 \section{NEAT}\label{sec:neat}
 The NEAT API~\citep{khademi_neatplatformprotocolindependent_2017} is a library to provide a platform and protocol
@@ -66,18 +93,22 @@ It removes large amounts of existing boilerplate networking code, such as DNS re
 from the protocols used.
 This allows for smaller application code bases, and increased uptake in alternative protocols.
 
+The duration of kernel release cycles is one of the reasons alternative transport layer protocols have limited uptake.
+To add a new transport protocol to sockets, a new kernel release must be developed with this new protocol
+NEAT is a user-space library, therefore supports both kernel-space and user-space transport protocols.
+User-space transport protocols can be implemented and included in NEAT, independent of the kernel release cycle.
+This removes the need to implement new transport protocols over UDP, removing the often duplicated code to use UDP
+as a substrate for the protocol.
+
 Existing network applications must specify the protocols they wish to use.
 NEAT does not require the application to do this, rather NEAT determines a collection of suitable protocols internally
 either from a set of allowed protocols from the user or from all supported protocols.
-The collection is iterated over, attempting to open a connection with each protocol.
-If a connection is not established within a timeout, the next protocol is tried, but the existing attempts are not
-cancelled, rather the first successful connection attempt is used, irrespective of when it was attempted.
-This allows for alternative protocols to be attempted before conventional protocols, with minimal delay if the
-alternative protocols fail to connect.
-This technique is the same as Happy Eyeballs~\citep{pauly_happyeyeballsversion_}.
+The method used to select the optimal protocol stack is called Happy Eyeballs~\citep{pauly_happyeyeballsversion_}.
+This allows for alternative protocols, including user-space protocols, to be attempted while using traditional protocols
+as fallbacks.
 
-%\section{TAPS}\label{sec:taps}
-%Transport Services~\citep{pauly_architecturetransportservices_2019} is proposed standard from the TAPS working group.
+\section{TAPS}\label{sec:taps}
+Transport Services~\citep{pauly_architecturetransportservices_2019} is proposed standard from the TAPS working group.
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}

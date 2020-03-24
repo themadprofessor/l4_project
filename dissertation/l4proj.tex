@@ -238,9 +238,16 @@ programming in mind.
 %  APPENDICES
 
 \begin{appendices}
-    \chapter{Appendices}\label{ch:appendices}
+    \chapter{BSD Sockets Connection Evaluation Code}\label{ch:bsd-sockets-connection-code}
+    \lstinputlisting[language=C]{../sockets/main.c}
 
-    \section{Structure of the Source Code}\label{sec:structure-of-the-source-code}
+    \chapter{TAPS Connection Evaluation Code}\label{ch:taps-connection-evaluation-code}
+    \lstinputlisting[langauge=Rust]{../taps/src/main.rs}
+
+    \chapter{Bash Script for Latency Testing}\label{ch:bash-script-for-latency-testing}
+    \lstinputlisting[language=bash]{../data/test.sh}
+
+    \chapter{Structure of the Source Code}\label{ch:structure-of-the-source-code}
     \dirtree{%
         .1 /.
         .2 connection.rs\DTcomment{Definition of Connection trait}.
