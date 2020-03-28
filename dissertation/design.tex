@@ -28,9 +28,14 @@ to a port, or establishing a \emph{Connection} to a remote device.
 The remaining sections are either a trivial object creation or solving properties, as such are synchronous.
 Solving properties can contain a concurrent implementation if the implementation deems this necessary.
 Figure~\ref{fig:lifecycle} shows the lifecycle of a \emph{Connection} object.
-All \emph{Connection} objects are created either directly via \texttt{initiate()} or indirectly via a \emph{Connection}.
+All \emph{Connection} objects are created either directly via \texttt{initiate()} or indirectly via a \emph{Listener}.
 A \emph{Connection} then communicates with the network through a \emph{Framer}, until \emph{Connection} is no longer
 needed and \texttt{close()} or \texttt{abort()} are called.
+Rust's \texttt{Drop} allows the user of the API to not call either \texttt{close()} or \texttt{abort()} explicitly, as
+it allows arbitrary code to be executed when a variable goes out of scope.
+Since utilising \texttt{Drop} does not allow for errors to be propagated back to the user, it will likely be similar to
+a \texttt{close()} call where all errors are silently discarded.
+Section~\ref{subsec:connection} describes the difference between \texttt{close()} and \texttt{abort()}.
 See Section~\ref{subsec:framer} for details on why a \emph{Framer} is required for a \emph{Connection}.
 
 \section{Abstract API}\label{sec:abstract-api}
@@ -63,7 +68,7 @@ where
     F: Framer,
     L: EndpointState,
     R: EndpointState,
-    I: Impl
+    I: Implementation
 {
     local: L,
     remote: R,
@@ -88,6 +93,12 @@ Once the \emph{Preconnection} is given a local or remote endpoint, L or R are ch
 depending on if the endpoint is local or remote.
 The initiate and listen methods require L and R respectively to be a type other than NoEndpoint.
 This allows the Rust compiler to enforce these constraints, rather than run time checks.
+
+\subsection{Implementation}\label{subsec:implementation}
+The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
+public to allow the end user to select from multiple implementations, and create custom implementations.
+The specific implementation will be given \emph{Preconnection}'s \texttt{I} generic parameter, which implements the
+\emph{Implmentation} trait.
 
 \begin{lstlisting}[float=h, label=lst:impl, caption={The Implementation trait.}]
 pub trait Implementation {
@@ -115,25 +126,11 @@ pub trait Implementation {
 }
 \end{lstlisting}
 
-\subsection{Implementation}\label{subsec:implementation}
-The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
-public to allow the end user to select from multiple implementations, and create custom implementations.
-The specific implementation will be given \emph{Preconnection}'s \texttt{I} generic parameter, which implements the
-\emph{Implmentation} trait.
-
 One method to utilise the \emph{Implementation} is to have the methods take either \texttt{\&mut self} or
 \texttt{\&self}, and pass the implementation as a parameter when constructing a \emph{Preconnection}.
 This would require the end user to always specify an implementation when constructing a \emph{Preconnection}, even when
 using the default implementation.
 See Listing~\ref{lst:preconnBad} for an example of this method.
-
-An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a
-marker.
-This would allow the \emph{Preconnection} can specify a default implementation using Rust's default generic parameter
-mechanism.
-See Listing~\ref{lst:preconnGood} for two examples of this method, the first \emph{Preconnection} is an example of using
-the default implementation, and the second \emph{Preconnection} shows how a custom implementation would be specified.
-Since the underlying implemenation is not intended to be a focus for the user, this method will be used.
 
 \begin{lstlisting}[float=h, label=lst:preconnBad, caption={An example of how to construct a
 Preconnection if the Implementation trait is to be passed when the Preconnection is constructed}]
@@ -143,6 +140,14 @@ fn example() {
 }
 \end{lstlisting}
 
+An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a
+marker.
+This would allow the \emph{Preconnection} can specify a default implementation using Rust's default generic parameter
+mechanism.
+See Listing~\ref{lst:preconnGood} for two examples of this method, the first \emph{Preconnection} is an example of using
+the default implementation, and the second \emph{Preconnection} shows how a custom implementation would be specified.
+Since the underlying implementation is not intended to be a focus for the user, this method will be used.
+
 \begin{lstlisting}[float=h, label=lst:preconnGood, caption={An example of how to construct a
 Preconnection if the Implementation trait is used as a marker.}]
 fn example() {
@@ -151,6 +156,44 @@ fn example() {
     ...
 }
 \end{lstlisting}
+
+\subsection{Endpoint}\label{subsec:endpoint}
+An \emph{Endpoint} is a type which represents a possible either a local or remote endpoint.
+This could be a string containing a domain name, or an IPv6 address and port number for example.
+It does not represent an endpoint, rather a possible endpoint which needs to be resolved into a \texttt{SocketAddr}.
+
+\begin{lstlisting}[float=h, label=lst:endpoint, caption={The Endpoint Trait with the resolve method returning an
+        Iterator.}]
+pub trait Endpoint: Send + 'static {
+    type Error: Send + Error;
+    type Iter: Iterator<Item = SocketAddr> + Send;
+
+    async fn resolve(self) -> Result<Self::Iter, Self::Error>;
+}
+\end{lstlisting}
+
+As shown in Listing~\ref{lst:endpoint}, \emph{Endpoint} requires a \texttt{resolve} method.
+This method is where a possible endpoint is resolved into a \texttt{SocketAddr}.
+There are no implementations of the trait provided as Rust does not allow a trait to be implemented twice for the same
+type.
+A trivial implementation could be provided for the \texttt{SocketAddr}, but implementations with traits similar to
+Rust's \texttt{ToSocketAddrs} trait, which have implementations for \texttt{SocketAddr}, cannot be used as a blanket
+implementation for \emph{Endpoint}.
+All implementations of \emph{Endpoint} must also be \texttt{Send} since \texttt{resolve} is async, which means it will
+make use of a \texttt{Future}, which could be ran on a different thread.
+The associated types \texttt{Error} and \texttt{Iter} require the type to be \texttt{Send} for the same reason.
+Furthermore, since there is no guarantee as to how long the \texttt{Future} will take to complete, the type which
+implements \emph{Endpoint} must exist for the length of the program, hence must have a \texttt{'static} lifetime.
+Upon a successful resolution, the resolved \texttt{SocketAddr}s are returned as an \texttt{Iterator}.
+Initially \texttt{resolve} returned a \texttt{Vec<SocketAddr>}, primarily because it allowed for simpler type defintions
+and didn't require an associated type.
+Using a \texttt{Vec} requires explicit allocation, which would lead to an unnecessary performance hit when an
+implementation operates on an \texttt{Iterator} internally or is a trivial implementation such as for
+\texttt{SocketAddr}.
+As such, \texttt{resolve} was modified to return an \texttt{Iterator}, which was defined as the associated type
+\texttt{Iter}.
+This can lead to a long type definition for \texttt{Iter}, but this can be mediated with the unstable feature
+\texttt{type\_alias\_impl\_trait}\footnote{\url{https://github.com/rust-lang/rust/issues/63063}}.
 
 \subsection{Connection}\label{subsec:connection}
 A \emph{Connection} object represents a messaged-orientated connection between a local and remote endpoint.
@@ -165,16 +208,16 @@ where
 F: Framer<S, R>
 {
     async fn send(&mut self, data: S) -> Result<(), Self::Error>
-where
-S: Encode;
+    where
+        S: Encode;
 
-async fn receive(&mut self) -> Result<R, Self::Error>
-where
-R: Decode;
+    async fn receive(&mut self) -> Result<R, Self::Error>
+    where
+        R: Decode;
 
-async fn close(self: Box<Self>) -> Result<(), Self::Error>;
+    async fn close(self: Box<Self>) -> Result<(), Self::Error>;
 
-fn abort(self: Box<Self>);
+    fn abort(self: Box<Self>);
 }
 \end{lstlisting}
 
@@ -192,6 +235,16 @@ As such, for the close and abort methods cannot take \texttt{Self}, instead take
 and does not require \texttt{Self} to be sized.
 These methods consume \texttt{Box<Self>} because the Rust compiler can ensure no other variable has ownership of the
 \emph{Connection} when it is closed or aborted, preventing the \emph{Connection} to be used after its closed or aborted.
+
+Both \texttt{close} and \texttt{abort} methods are provided because a \texttt{close} will gracefully close the
+underlying connection.
+For connection-oriented transport protocols, \texttt{close} should inform the remote endpoint the connection
+is closed, allowing for resource cleanup.
+Connection-less transport protocols may inform the remote endpoint if applicable.
+Other the other hand, \texttt{abort} should cleanup the local resources, but makes no guarantee about if the remote
+endpoint is informed of the connection closing.
+If a \emph{Connection} has a \texttt{Drop} implementation, it should have similar semantics to \texttt{close}, but
+discard errors produced.
 
 \subsection{Listener}\label{subsec:listener}
 A \emph{Listener} represents a stream of incoming \emph{Connection}s for a local endpoint.
@@ -228,19 +281,19 @@ shouldn't be duplicated rather reconstructed, the implementation can do that as 
 
 The \emph{Connection} and \emph{Listener} traits and the \emph{Preconnection} struct will be generic over the framer
 used to frame the data which the connections will be operating on.
-This will ensure the \emph{Connections} can only handle specific strongly-typed data.
+This will ensure the \emph{Connection}s can only handle specific strongly-typed data.
 All methods on the \emph{Connection} trait which either receive data or send data will utilise this generic parameter in
 their return value and parameters respectively.
 The \emph{Preconnection}'s listen and initiate methods will pass this generic parameter to the new \emph{Listener}
 object or \emph{Connection} object respectively.
-An alternative approach is to have the traits generic over the data which the \emph{Connections} will be operating on.
+An alternative approach is to have the traits generic over the data which the \emph{Connection}s will be operating on.
 The issue with this approach is the compiler cannot ensure a \emph{Connection} has certain properties which methods
 could rely on.
 For example, a method could require a \emph{Connection} which is framed with TLS .
-If the \emph{Connection} is generic over the \emph{Framer}, the compiler can ensure only \emph{Connections} which are
+If the \emph{Connection} is generic over the \emph{Framer}, the compiler can ensure only \emph{Connection}s which are
 framed with TLS are used, ensuring the data being transmitted is encrypted.
-Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \emph{Connections}
-with \emph{Framers} which have specific properties can be used with certain methods.
+Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \emph{Connection}s
+with \emph{Framer}s which have specific properties can be used with certain methods.
 
 \subsection{Framer}\label{subsec:framer}
 \begin{lstlisting}[float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
@@ -295,7 +348,7 @@ a static lifetime.
 different threads.
 While a \texttt{Future} does not specify it will be executed on a different thread than it was created, but it allows
 it so a \emph{Framer} must be able to be passed to another thread.
-Since \emph{Framer}'s methods use \texttt{&mut self}, a \emph{Framer} maybe accessed by a thread other than the thread
+Since \emph{Framer}'s methods use \texttt{\&mut self}, a \emph{Framer} maybe accessed by a thread other than the thread
 which created, so a \emph{Framer} must be able to be accessed from different threads.
 Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
 lifetime of the function.

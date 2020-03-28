@@ -9,7 +9,8 @@
 \usepackage{listings-rust}
 \usepackage{dirtree}
 \usepackage{pgf}
-\usepackage{tikz}
+\usepackage[bottom]{footmisc}
+\usepackage{natbib}
 \lstset{language=Rust}
 
 \begin{document}
@@ -242,7 +243,7 @@ programming in mind.
     \lstinputlisting[language=C]{../sockets/main.c}
 
     \chapter{TAPS Connection Evaluation Code}\label{ch:taps-connection-evaluation-code}
-    \lstinputlisting[langauge=Rust]{../taps/src/main.rs}
+    \lstinputlisting{../taps/src/main.rs}
 
     \chapter{Bash Script for Latency Testing}\label{ch:bash-script-for-latency-testing}
     \lstinputlisting[language=bash]{../data/test.sh}

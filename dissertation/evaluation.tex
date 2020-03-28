@@ -7,7 +7,7 @@ for the TAPS code.
 
 \subsection{Latency Comparison}\label{subsec:latency-comparison}
 Performance is important for network programming, and as discussed in Chapter~\ref{ch:analysis/requirements} the new
-API should have performance similar to BSD sockets.
+API should have performance similar to BSD sockets (sockets).
 To have a fair comparision between the two API, the sockets version must also prioritise IPv6 addresses over IPv4
 addresses, since the TAPS version does this internally.
 Since a DNS lookup could have a large impact on the total latency, the domain tested is requested multiple times before
@@ -20,14 +20,16 @@ See Appendix~\ref{ch:bash-script-for-latency-testing} for the script used to tes
     \label{fig:latency}
 \end{figure}
 
+One style of network program is a short-lived program which only opens a single connection.
+A program like this is useful for scripting and Unix Pipelines.
+Figure~\ref{fig:latency} shows the time it takes to open a connection with both sockets and TAPS .
+
 Figure~\ref{fig:latency} shows the TAPS version was slower for almost all domain tested when compared to the sockets
 version.
 Since the sockets version is single-threaded and not asynchronous, it doesn't need to set up a runtime for
 \texttt{Future}s unlike the TAPS version.
 In this particular test, the runtime had to be initialised ten times for each domain tested, leading to an overhead the
 sockets version lacks.
-Real-life programs are likely to open many connections during a single execution, which would reduce the impact of the
-overhead.
 
 \subsection{Code Comparison}\label{subsec:lines-of-code-comparison}
 While lines of code is not a good metric to determine the quality of code, the substantial difference between the two
@@ -40,8 +42,7 @@ Opening a connection with the sockets API requires the following:
     \item Open a socket
     \item Connect to the remote server
 \end{itemize}
-The TAPS API does this all within \emph{Preconnection}'s \texttt{initate} method.
-
+The TAPS API does this all within \emph{Preconnection}'s \texttt{initiate} method.
 
 %How good is your solution? How well did you solve the general problem, and what evidence do you have to support that?
 %

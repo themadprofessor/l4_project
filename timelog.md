@@ -198,3 +198,17 @@
 
 ### 15 Mar 2020
 * *3 hours* Attempt to write c socket eval code
+
+## Week 5
+### 16 Mar 2020
+* *4 hours* Time both c and rust eval code, and analyse data
+
+### 18 Mar 2020
+* *2 hours* Start evaluation
+
+### 20 Mar 2020
+* *2 hours* Move figures/listings closer to references
+
+## Week 26
+### 24 Mar 2020
+* *3 hours* Add post sockets section

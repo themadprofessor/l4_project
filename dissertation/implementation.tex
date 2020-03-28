@@ -20,6 +20,55 @@ Where Tokio is intended to be a fully-featured asynchronous programming platform
 standard library.
 Ultimately, Tokio is a more mature library with a much larger user base, so Tokio will be used over async-std.
 
+\section{Connection Racing}\label{sec:connection-racing-impl}
+As discussed in Section~\ref{sec:connection-racing}, the API must internally perform connection racing, utilising
+Happy Eyeballs~\citep{pauly_happyeyeballsversion_}.
+
+\begin{lstlisting}[float=h, label=fig:racer, caption=The connection racing implementation, with the delay on IPv4
+addresses.]
+async fn add_delay(addr: SocketAddr, props: &TransportProperties) -> Result<Connecting, Error> {
+    match addr {
+        SocketAddr::V4(_) => {
+            tokio::time::delay_for(Duration::from_millis(5)).await
+        }
+        SocketAddr::V6(_) => tokio::time::delay_for(Duration::from_millis(0)).await,
+    };
+    Connecting::create(addr, props).await
+}
+
+pub async fn race<E, F>(
+    endpoint: E,
+    props: &TransportProperties,
+    framer: F,
+) -> Result<Box<dyn crate::Connection<F>>, Error>
+where
+    E: Endpoint,
+    <E as Endpoint>::Error: 'static,
+    F: Framer,
+{
+    ::futures::future::select_ok(
+        endpoint
+            .resolve()
+            .await
+            .map_err(box_error)
+            .with_context(|| Resolve)?
+            .map(|addr| ::tokio::task::spawn(add_delay(addr, &props)).boxed()),
+    )
+    .await
+    .map(|x| x.0.framer(framer))
+}
+\end{lstlisting}
+
+As shown in Listing~\ref{fig:racer}, the connection racing makes use of the \emph{Endpoint} trait to resolve the
+endpoint before attempting to connect to each \texttt{SocketAddr}.
+Each connection attempt future is executed using Tokio's task mechanism.
+This is Tokio's asynchronous green threads implementation, which allows for each connection attempt to be conducted
+simultaneously.
+If Tokio's threaded runtime is enabled, the tasks are split across multiple threads, allowing for more concurrency over
+Tokio's default runtime which is single threaded.
+To select the first successful connection, the future crate's \texttt{select_ok} function is utilised.
+The \texttt{select_ok} function waits for any \texttt{Future} it's given to complete and produce an \texttt{Ok}.
+
 %What did you do to implement this idea, and what technical achievements did you make?
 %\section{Guidance}
 %You can't talk about everything. Cover the high level first, then cover important, relevant or impressive details.

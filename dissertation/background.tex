@@ -57,8 +57,8 @@ When an \texttt{async} function reaches an \texttt{await}, the poll being used t
 informing the runtime this \texttt{Future} is incomplete and another \texttt{Future} should be polled.
 The \texttt{Future} will continue to return \texttt{Pending} until the \texttt{Future} being awaited completes,
 at which point the function will continue until the next \texttt{await} or the function returns.
-The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared to manually
-handling \texttt{Future}s.
+The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared too
+manually handling \texttt{Future}s.
 
 \section{Post Sockets}\label{sec:post-sockets}
 Post Sockets~\citep{kuhlewind_postsocketsabstract_} is an API intended to provide an asynchronous, message-orientated,
@@ -66,7 +66,7 @@ transport-protocol independent networking API to be used instead of BSD Sockets 
 
 As~\cite{kuhlewind_postsocketsabstract_} explains, modern networked devices have multiple interfaces, which would
 provide natural support for multipath communications using protocols such as
-MPTCP~\citep{handley_tcpextensionsmultipath_}.
+MPTCP\footnote{Multipath TCP Extensions - IETF RFC6842}.
 The existing sockets API provides limited support for multipath communications, whereas Post Sockets has explicit
 support through its \emph{Configuration} object.
 Post Socket's \emph{Configuration} objects allow the user to specify a collection of possible protocol stack
@@ -78,13 +78,13 @@ Typed messages would be given to or received from a \emph{Carrier} (protocol sta
 receives messages) as this allows both byte-stream and datagram oriented transport protocols to be supported.
 
 Another point raised by~\cite{kuhlewind_postsocketsabstract_} is layering encryption over the existing sockets API .
-Opening a TCP connection with Transport Layer Security (TLS) requires two handshakes to happen seqentially: the
+Opening a TCP connection with Transport Layer Security (TLS) requires two handshakes to happen sequentially: the
 transport-layer handshake and the encryption-layer handshake, which increases latency.
 To avoid this Post Sockets defines an \emph{Association} object, which contains long-term state between a local endpoint
 and a remote endpoint.
-This can contain data such as pre-shared keys and cryptographic session resumption paramters.
+This can contain data such as pre-shared keys and cryptographic session resumption parameters.
 New \emph{Carrier}s can be created from an existing \emph{Association} object, removing the need to repeat an
-ecryption-layer handshake between the same local endpoint and remote endpoint.
+encryption-layer handshake between the same local endpoint and remote endpoint.
 
 \section{NEAT}\label{sec:neat}
 The NEAT API~\citep{khademi_neatplatformprotocolindependent_2017} is a library to provide a platform and protocol
