@@ -22,21 +22,21 @@ the design decisions made for each object.
     \label{fig:lifecycle}
 \end{figure}
 
-As shown in Figure~\ref{fig:flow}, there are both asynchronous and synchronous sections of opening a \emph{Connection}.
-The asynchronous sections are when the program would have to carry out some I/O, for example binding a \emph{Listener}
-to a port, or establishing a \emph{Connection} to a remote device.
+As shown in Figure~\ref{fig:flow}, there are both asynchronous and synchronous sections of opening a \connection{}.
+The asynchronous sections are when the program would have to carry out some I/O, for example binding a \listener{}
+to a port, or establishing a \connection{} to a remote device.
 The remaining sections are either a trivial object creation or solving properties, as such are synchronous.
 Solving properties can contain a concurrent implementation if the implementation deems this necessary.
-Figure~\ref{fig:lifecycle} shows the lifecycle of a \emph{Connection} object.
-All \emph{Connection} objects are created either directly via \texttt{initiate()} or indirectly via a \emph{Listener}.
-A \emph{Connection} then communicates with the network through a \emph{Framer}, until \emph{Connection} is no longer
+Figure~\ref{fig:lifecycle} shows the lifecycle of a \connection{} object.
+All \connection{} objects are created either directly via \texttt{initiate()} or indirectly via a \listener{}.
+A \connection{} then communicates with the network through a \emph{Framer}, until \connection{} is no longer
 needed and \texttt{close()} or \texttt{abort()} are called.
 Rust's \texttt{Drop} allows the user of the API to not call either \texttt{close()} or \texttt{abort()} explicitly, as
 it allows arbitrary code to be executed when a variable goes out of scope.
 Since utilising \texttt{Drop} does not allow for errors to be propagated back to the user, it will likely be similar to
 a \texttt{close()} call where all errors are silently discarded.
 Section~\ref{subsec:connection} describes the difference between \texttt{close()} and \texttt{abort()}.
-See Section~\ref{subsec:framer} for details on why a \emph{Framer} is required for a \emph{Connection}.
+See Section~\ref{subsec:framer} for details on why a \emph{Framer} is required for a \connection{}.
 
 \section{Abstract API}\label{sec:abstract-api}
 The API will be expressed primarily through abstract types with multiple possible concrete implementations.
@@ -55,10 +55,9 @@ While using trait objects would add a performance overhead due to pointer indire
 of dynamic linking and alternative distribution out ways this.
 
 \subsection{Preconnection}\label{subsec:preconnection}
-A \emph{Preconnection} object is a configuration object.
-It contains the endpoints, both local and remote, a \emph{Connection} or \emph{Listener} should connect or bind too
-respectively, as well as the properties the resultant \emph{Connection} or \emph{Listener} should have.
-\cite[§~5.2]{trammell_abstractapplicationlayer_2019} defines a set of properties a \emph{Preconnection} can
+A \preconnection{} object is a configuration object.
+It contains the endpoints, both local and remote, a \connection{} or \listener{} should connect or bind too
+respectively, as well as the properties the resultant \connection{} or \listener{} should have.~\cite[§~5.2]{trammell_abstractapplicationlayer_2019} defines a set of properties a \preconnection{} can
 configure.
 
 \begin{lstlisting}[float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
@@ -77,27 +76,21 @@ where
 }
 \end{lstlisting}
 
-The \emph{Preconnection} type will be defined as a concrete struct, rather than a trait, unlike the \emph{Listener} and
-\emph{Connection} types.
-Since a \emph{Preconnection} is a configuration type which is independent of the underlying implementation, using a
+The \preconnection{} type will be defined as a concrete struct, rather than a trait, unlike the \listener{} and
+\connection{} types.
+Since a \preconnection{} is a configuration type which is independent of the underlying implementation, using a
 trait would be redundant as each underlying implementation would implement the trait identically.
 Furthermore, due to issues with the Rust compiler, it is difficult to change generic parameters with trait methods,
 which is used to ensure endpoints are specified at compile time.
-Listing~\ref{lst:preconnection} shows the definition for the \emph{Preconnection} struct and the generic parameters it
+Listing~\ref{lst:preconnection} shows the definition for the \preconnection{} struct and the generic parameters it
 has.
 The generic parameters L and R are used to represent the possible local and remote endpoints respectively.
-Endpoint state is a marker (empty) trait which is implemented for the empty struct NoEndpoint and any type which
-implements the Endpoint trait (See Listing~\ref{lst:endpoint}).
-When a \emph{Preconnection} is created, L and R are both NoEndpoint.
-Once the \emph{Preconnection} is given a local or remote endpoint, L or R are changed to the type of the given endpoint,
-depending on if the endpoint is local or remote.
-The initiate and listen methods require L and R respectively to be a type other than NoEndpoint.
-This allows the Rust compiler to enforce these constraints, rather than run time checks.
+See Section~\ref{sec:preconnection-endpoint-safety} for details on these parameters.
 
 \subsection{Implementation}\label{subsec:implementation}
 The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
 public to allow the end user to select from multiple implementations, and create custom implementations.
-The specific implementation will be given \emph{Preconnection}'s \texttt{I} generic parameter, which implements the
+The specific implementation will be given \preconnection{}'s \texttt{I} generic parameter, which implements the
 \emph{Implmentation} trait.
 
 \begin{lstlisting}[float=h, label=lst:impl, caption={The Implementation trait.}]
@@ -127,8 +120,8 @@ pub trait Implementation {
 \end{lstlisting}
 
 One method to utilise the \emph{Implementation} is to have the methods take either \texttt{\&mut self} or
-\texttt{\&self}, and pass the implementation as a parameter when constructing a \emph{Preconnection}.
-This would require the end user to always specify an implementation when constructing a \emph{Preconnection}, even when
+\texttt{\&self}, and pass the implementation as a parameter when constructing a \preconnection{}.
+This would require the end user to always specify an implementation when constructing a \preconnection{}, even when
 using the default implementation.
 See Listing~\ref{lst:preconnBad} for an example of this method.
 
@@ -142,10 +135,10 @@ fn example() {
 
 An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a
 marker.
-This would allow the \emph{Preconnection} can specify a default implementation using Rust's default generic parameter
+This would allow the \preconnection{} can specify a default implementation using Rust's default generic parameter
 mechanism.
-See Listing~\ref{lst:preconnGood} for two examples of this method, the first \emph{Preconnection} is an example of using
-the default implementation, and the second \emph{Preconnection} shows how a custom implementation would be specified.
+See Listing~\ref{lst:preconnGood} for two examples of this method, the first \preconnection{} is an example of using
+the default implementation, and the second \preconnection{} shows how a custom implementation would be specified.
 Since the underlying implementation is not intended to be a focus for the user, this method will be used.
 
 \begin{lstlisting}[float=h, label=lst:preconnGood, caption={An example of how to construct a
@@ -158,7 +151,7 @@ fn example() {
 \end{lstlisting}
 
 \subsection{Endpoint}\label{subsec:endpoint}
-An \emph{Endpoint} is a type which represents a possible either a local or remote endpoint.
+An \Endpoint{} is a type which represents a possible either a local or remote endpoint.
 This could be a string containing a domain name, or an IPv6 address and port number for example.
 It does not represent an endpoint, rather a possible endpoint which needs to be resolved into a \texttt{SocketAddr}.
 
@@ -172,18 +165,18 @@ pub trait Endpoint: Send + 'static {
 }
 \end{lstlisting}
 
-As shown in Listing~\ref{lst:endpoint}, \emph{Endpoint} requires a \texttt{resolve} method.
+As shown in Listing~\ref{lst:endpoint}, \Endpoint{} requires a \texttt{resolve} method.
 This method is where a possible endpoint is resolved into a \texttt{SocketAddr}.
 There are no implementations of the trait provided as Rust does not allow a trait to be implemented twice for the same
 type.
 A trivial implementation could be provided for the \texttt{SocketAddr}, but implementations with traits similar to
 Rust's \texttt{ToSocketAddrs} trait, which have implementations for \texttt{SocketAddr}, cannot be used as a blanket
-implementation for \emph{Endpoint}.
-All implementations of \emph{Endpoint} must also be \texttt{Send} since \texttt{resolve} is async, which means it will
+implementation for \Endpoint{}.
+All implementations of \Endpoint{} must also be \texttt{Send} since \texttt{resolve} is async, which means it will
 make use of a \texttt{Future}, which could be ran on a different thread.
 The associated types \texttt{Error} and \texttt{Iter} require the type to be \texttt{Send} for the same reason.
 Furthermore, since there is no guarantee as to how long the \texttt{Future} will take to complete, the type which
-implements \emph{Endpoint} must exist for the length of the program, hence must have a \texttt{'static} lifetime.
+implements \Endpoint{} must exist for the length of the program, hence must have a \texttt{'static} lifetime.
 Upon a successful resolution, the resolved \texttt{SocketAddr}s are returned as an \texttt{Iterator}.
 Initially \texttt{resolve} returned a \texttt{Vec<SocketAddr>}, primarily because it allowed for simpler type defintions
 and didn't require an associated type.
@@ -196,11 +189,19 @@ This can lead to a long type definition for \texttt{Iter}, but this can be media
 \texttt{type\_alias\_impl\_trait}\footnote{\url{https://github.com/rust-lang/rust/issues/63063}}.
 
 \subsection{Connection}\label{subsec:connection}
-A \emph{Connection} object represents a messaged-orientated connection between a local and remote endpoint.
+A \connection{} object represents a messaged-orientated connection between a local and remote endpoint.
 It wraps an underlying protocol stack the user of the API specifies with the \emph{Implementation}
-parameter of the \emph{Preconnection} which crated the \emph{Connection}.
+parameter of the \preconnection{} which crated the \connection{}.
 The user shouldn't need to focus on the underlying protocol stack as the \texttt{initiate()} method and
-\emph{Listener} will ensure the required properties for the \emph{Connection} are upheld.
+\listener{} will ensure the required properties for the \connection{} are upheld.
+A \connection{} cannot be created without a remote endpoint.
+Without a remote endpoint, a \connection{} has nothing to connect too.
+The remote endpoint can either be given to the creating \preconnection{} for use in the \texttt{initate()} method,
+or from the incoming \emph{connection} a \listener{} receives.
+If the creating \preconnection{} is given a local endpoint, the \texttt{initaite()} method will ensure the resulting
+\connection{} is between the required remote endpoint and given local endpoint.
+By default, the \texttt{initate()} method will attempt to establish a \emph{connection} between the required remote
+endpoint and any applicable local endpoint.
 
 \begin{lstlisting}[float=h, label=lst:connection, caption={The Connection trait.}]
 pub trait Connection<F, S, R>
@@ -221,20 +222,20 @@ F: Framer<S, R>
 }
 \end{lstlisting}
 
-The \emph{Connection} will be defined as a trait, and will be constructed with the \emph{Preconnection} object's
+The \connection{} will be defined as a trait, and will be constructed with the \preconnection{} object's
 initiate method.
 Each implementation of the \emph{Implementation} trait will have its own underlying representation of a connection
 between a local and remote endpoint.
-Defining a \emph{Connection} as trait allows the user's code to use any underlying representation of a connection
+Defining a \connection{} as trait allows the user's code to use any underlying representation of a connection
 without having to specifically handle each possible representation.
 As shown in Listing~\ref{lst:connection}, the close and abort methods take \texttt{Box<Self>} rather than \texttt{Self}.
-Since \emph{Connection} is to be a trait object, it must be object safe.
+Since \connection{} is to be a trait object, it must be object safe.
 An object safe trait, must not require implementations to be sized, not have any methods which consume \texttt{Self}, no
 associated constants and all supertraits must be object safe.
 As such, for the close and abort methods cannot take \texttt{Self}, instead take \texttt{Box<Self>} since it is sized
 and does not require \texttt{Self} to be sized.
 These methods consume \texttt{Box<Self>} because the Rust compiler can ensure no other variable has ownership of the
-\emph{Connection} when it is closed or aborted, preventing the \emph{Connection} to be used after its closed or aborted.
+\connection{} when it is closed or aborted, preventing the \connection{} to be used after its closed or aborted.
 
 Both \texttt{close} and \texttt{abort} methods are provided because a \texttt{close} will gracefully close the
 underlying connection.
@@ -243,13 +244,19 @@ is closed, allowing for resource cleanup.
 Connection-less transport protocols may inform the remote endpoint if applicable.
 Other the other hand, \texttt{abort} should cleanup the local resources, but makes no guarantee about if the remote
 endpoint is informed of the connection closing.
-If a \emph{Connection} has a \texttt{Drop} implementation, it should have similar semantics to \texttt{close}, but
+If a \connection{} has a \texttt{Drop} implementation, it should have similar semantics to \texttt{close}, but
 discard errors produced.
 
 \subsection{Listener}\label{subsec:listener}
-A \emph{Listener} represents a stream of incoming \emph{Connection}s for a local endpoint.
-It is bound to the local endpoint in the creating \emph{Preconnection}, and listens for incoming \emph{Connection}s,
+A \listener{} represents a stream of incoming \connection{}s for a local endpoint.
+It is bound to the local endpoint in the creating \preconnection{}, and listens for incoming \connection{}s,
 represented as an asynchronous stream of \emph{Connections}.
+A \listener{} cannot be created without a local endpoint.
+Without a local endpoint, the \listener{} cannot be bound and cannot listen ofr incoming \connection{}s.
+The local endpoint must be given to the creating \preconnection{} for use in the \texttt{listen()} method.
+A remote endpoint is optional, and if it is given to the creating \preconnection{}, the resulting \listener{} will only
+accept \connection{}s from the given remote endpoint.
+A \listener{} created without a remote endpoint will accept any incoming \connection{}s.
 
 \begin{lstlisting}[float=h, label=lst:listener, caption={The Listener trait, showing the Stream
 implementation requirement for all implementers.}]
@@ -263,36 +270,36 @@ where
 \end{lstlisting}
 One approach to design this trait is to define the trait with a method which returns a \texttt{Future} that resolves
 into a Connection when one is received.
-An issue with this design is it does not represent a \emph{Listener} as what it is.
-Conceptually a \emph{Listener} is an asynchronous stream of \emph{Connection}s, and this design represents a
-\emph{Listener} as an object which is idle until the user requests a \emph{Connection}.
+An issue with this design is it does not represent a \listener{} as what it is.
+Conceptually a \listener{} is an asynchronous stream of \connection{}s, and this design represents a
+\listener{} as an object which is idle until the user requests a \connection{}.
 At this point it then begins to listen for incoming connections, which could lead to lost connections.
-A better design is to have all implementations of the \emph{Listener} trait also implement the \texttt{Stream} trait
+A better design is to have all implementations of the \listener{} trait also implement the \texttt{Stream} trait
 from the futures crate.
-This allows a \emph{Listener} to make use of the existing \texttt{Stream} ecosystem, such as the \texttt{StreamExt}
+This allows a \listener{} to make use of the existing \texttt{Stream} ecosystem, such as the \texttt{StreamExt}
 trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
 As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
-which either a \emph{Connection} or an \emph{Error}.
-For a \emph{Framer} to be given to a \emph{Listener}, a new version of it needs to be given to each \emph{Connection}
+which either a \connection{} or an \emph{Error}.
+For a \emph{Framer} to be given to a \listener{}, a new version of it needs to be given to each \connection{}
 received.
-As such, \emph{Framer}'s which can be used with the \emph{Listener} trait must implement \texttt{Clone}.
+As such, \emph{Framer}'s which can be used with the \listener{} trait must implement \texttt{Clone}.
 Since \texttt{Clone}'s \texttt{clone} method allows arbitrary code, \emph{Framer}s which contain information which
 shouldn't be duplicated rather reconstructed, the implementation can do that as required.
 
-The \emph{Connection} and \emph{Listener} traits and the \emph{Preconnection} struct will be generic over the framer
+The \connection{} and \listener{} traits and the \preconnection{} struct will be generic over the framer
 used to frame the data which the connections will be operating on.
-This will ensure the \emph{Connection}s can only handle specific strongly-typed data.
-All methods on the \emph{Connection} trait which either receive data or send data will utilise this generic parameter in
+This will ensure the \connection{}s can only handle specific strongly-typed data.
+All methods on the \connection{} trait which either receive data or send data will utilise this generic parameter in
 their return value and parameters respectively.
-The \emph{Preconnection}'s listen and initiate methods will pass this generic parameter to the new \emph{Listener}
-object or \emph{Connection} object respectively.
-An alternative approach is to have the traits generic over the data which the \emph{Connection}s will be operating on.
-The issue with this approach is the compiler cannot ensure a \emph{Connection} has certain properties which methods
+The \preconnection{}'s listen and initiate methods will pass this generic parameter to the new \listener{}
+object or \connection{} object respectively.
+An alternative approach is to have the traits generic over the data which the \connection{}s will be operating on.
+The issue with this approach is the compiler cannot ensure a \connection{} has certain properties which methods
 could rely on.
-For example, a method could require a \emph{Connection} which is framed with TLS .
-If the \emph{Connection} is generic over the \emph{Framer}, the compiler can ensure only \emph{Connection}s which are
+For example, a method could require a \connection{} which is framed with TLS .
+If the \connection{} is generic over the \emph{Framer}, the compiler can ensure only \connection{}s which are
 framed with TLS are used, ensuring the data being transmitted is encrypted.
-Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \emph{Connection}s
+Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \connection{}s
 with \emph{Framer}s which have specific properties can be used with certain methods.
 
 \subsection{Framer}\label{subsec:framer}
@@ -364,7 +371,7 @@ A HttpRequest object and HttpResponse object would contain a type which implemen
 trait respectively.
 
 \subsection{Encode and Decode}\label{subsec:encode-and-decode}
-The \emph{Connection} sends and recieves typed messages, but the underlying protocol stack operates on raw bytes,
+The \connection{} sends and recieves typed messages, but the underlying protocol stack operates on raw bytes,
 therefore messages must be able to be converted to and from raw bytes.
 \emph{Encode} defines a type which can be encoded into bytes for transport.
 \emph{Decode} defines a type which can be decoded from bytes, and support incomplete data when decoding.
@@ -417,17 +424,17 @@ pub enum Error<E> {
 }
 \end{lstlisting}
 
-In order to handle incomplete data when receiving data from a \emph{Connection}, the error type for both the
+In order to handle incomplete data when receiving data from a \connection{}, the error type for both the
 \emph{Framer}'s \texttt{deframe} and \emph{Decode}'s \texttt{decode} methods must indicate this.
 As shown in Listings~\ref{lst:decode} and~\ref{lst:framer}, the returned error types are wrapped in \texttt{Error},
 which is defined as shown in Listing~\ref{lst:codecError}.
 This is based of the method used by~\cite{geal_nomerrrust_} for the nom crate.
 If the \emph{Framer} or \emph{Decode} runs out of data while deframing or decoding respectively, it will return a
-\texttt{Error::Incomplete}, to signify to the \emph{Connection} to get more data.
+\texttt{Error::Incomplete}, to signify to the \connection{} to get more data.
 Both the \texttt{decode} and \texttt{deframe} methods \texttt{Ok} and \texttt{Err} also contain the remaining data which
 has not be used from the input.
 Using \texttt{BytesMut} allows the implementations of \emph{Decode} and \emph{Framer} to advance the start of the
-current buffer internally, and allows the \emph{Connection} implementation to continue to read more data into the same
+current buffer internally, and allows the \connection{} implementation to continue to read more data into the same
 buffer.
 For example, a HTTP framer would attempt to read until the end of a header line.
 If it successfully finds the end of line, it can advance the \texttt{ByteMut} to the end of line to avoid parsing the
@@ -451,7 +458,7 @@ The main issue with this approach is only the protocols implemented by the API c
 One of the issues discussed with the existing sockets API was how it restricted the uptake of new protocols, which this
 approach would replicate, therefore it will not be used.
 Another approach is to define an abstract \emph{Protocol} type as a trait, with a method to create a default
-\emph{Preconnection} for the protocol.
+\preconnection{} for the protocol.
 This would allow third-party crates to add application layer protocols without the API to be updated.
 
 \section{Connection Racing}\label{sec:connection-racing}
