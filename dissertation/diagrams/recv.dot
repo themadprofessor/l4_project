@@ -1,14 +1,19 @@
 digraph {
-    user [label=User];
-    conn [label=Connection];
-    framer [label=Framer];
-    decode [label=Decoder];
+    user [label=User, group=g1];
+    framer [label=Framer, shape=box, group=g1];
+    decode [label=Decode, shape=box, group=g1];
+    subgraph {
+        graph [rank=same];
+        conn [label=Connection, shape=box, group=g1];
+        net [label=Network, shpape=Msquare];
+    }
 
+    decode -> conn [label="7. Decoded data"];
     user -> conn [label="1. recv()"];
-    conn -> framer [label="2. Data received"];
-    framer -> conn [label="3. Incomplete data"];
-    framer -> decode [label="4. Deframed data"];
-    decode -> framer [label="5. Incomplete data"];
-    decode -> conn [label="6. Decoded data"];
-    conn -> user [label="7. return data"];
+    net -> conn [label="2. Data received"];
+    conn -> framer [label="3. Data received"];
+    framer -> conn [label="4. Incomplete data", weight=2];
+    framer -> decode [label="5. Deframed data"];
+    decode -> framer [label="6. Incomplete data"];
+    conn -> user [label="8. return data"];
 }

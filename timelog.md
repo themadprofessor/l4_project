@@ -212,3 +212,9 @@
 ## Week 26
 ### 24 Mar 2020
 * *3 hours* Add post sockets section
+
+### 29 Mar 2020
+* *6 hours* Add connection racing and preconnection statemachine sections
+
+## Week 27
+### 30 Mar 2020

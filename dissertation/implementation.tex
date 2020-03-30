@@ -152,6 +152,31 @@ Similarly, the \texttt{listen()} method is only implemented if \texttt{L} implem
 if a call to the \texttt{listen()} method is allowed by the compiler, a local endpoint must have been specified and the
 state machine must be in either the “Local Endpoint Only” or “Both Endpoints” state.
 
+\section{Receiving Messages}\label{sec:receiving-messages}
+As discussed in Section~\ref{subsec:encode-and-decode}, since a \connection{} is message-orientated, but the underlying
+transport protocol may not, therefore the \decode{} trait and the \framer{} object handle the conversions.
+The implementation handles incomplete messages by signaling from either the \framer{} object or \decode{} implementation
+to the calling \connection{} more data is needed from the network.
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{diagrams/recv.pdf}
+    \caption{A graph showing the flow of the program when receiving a message.}
+    \label{fig:recv}
+\end{figure}
+
+As shown in Figure~\ref{fig:recv}, once the user calls \texttt{recv()} and the \connection{} receives data, the data is
+passed to the \framer{} to be deframed.
+The \framer{} can then either signal to the \connection{} more data is required, or pass the remaining data to the
+\decode{} implementation, depending if enough data had be received to deframe the message.
+The \decode{} implementation can then either decode the message and return the decoded message back to the \connection{},
+or signal to the \framer{} more data is required, which in turn signals to the \connection{} more data is required.
+This leads to two possible cycles while processing a message: \texttt{3->4->3} or \texttt{3->5->6->4->3}.
+These cycles will repeat until either the message is ready to return to the user, or an error occurs.
+
+Signalling to the \connection{} more data is required is done by having the \texttt{deframe} and \texttt{decode} methods
+return a \texttt{Result} who's error case can be either \texttt{Incomplete} or \texttt{Err} containing an error.
+The \connection{} can then use Rust's match mechanism to handle both cases: waiting for more data in the
+\texttt{Incomplete} case, and propagating the \texttt{Err} case's inner error to the user.
 %What did you do to implement this idea, and what technical achievements did you make?
 %\section{Guidance}
 %You can't talk about everything. Cover the high level first, then cover important, relevant or impressive details.
