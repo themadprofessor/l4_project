@@ -29,14 +29,14 @@ The remaining sections are either a trivial object creation or solving propertie
 Solving properties can contain a concurrent implementation if the implementation deems this necessary.
 Figure~\ref{fig:lifecycle} shows the lifecycle of a \connection{} object.
 All \connection{} objects are created either directly via \texttt{initiate()} or indirectly via a \listener{}.
-A \connection{} then communicates with the network through a \emph{Framer}, until \connection{} is no longer
+A \connection{} then communicates with the network through a \framer{}, until \connection{} is no longer
 needed and \texttt{close()} or \texttt{abort()} are called.
 Rust's \texttt{Drop} allows the user of the API to not call either \texttt{close()} or \texttt{abort()} explicitly, as
 it allows arbitrary code to be executed when a variable goes out of scope.
 Since utilising \texttt{Drop} does not allow for errors to be propagated back to the user, it will likely be similar to
 a \texttt{close()} call where all errors are silently discarded.
 Section~\ref{subsec:connection} describes the difference between \texttt{close()} and \texttt{abort()}.
-See Section~\ref{subsec:framer} for details on why a \emph{Framer} is required for a \connection{}.
+See Section~\ref{subsec:framer} for details on why a \framer{} is required for a \connection{}.
 
 \section{Abstract API}\label{sec:abstract-api}
 The API will be expressed primarily through abstract types with multiple possible concrete implementations.
@@ -280,10 +280,10 @@ This allows a \listener{} to make use of the existing \texttt{Stream} ecosystem,
 trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
 As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
 which either a \connection{} or an \emph{Error}.
-For a \emph{Framer} to be given to a \listener{}, a new version of it needs to be given to each \connection{}
+For a \framer{} to be given to a \listener{}, a new version of it needs to be given to each \connection{}
 received.
-As such, \emph{Framer}'s which can be used with the \listener{} trait must implement \texttt{Clone}.
-Since \texttt{Clone}'s \texttt{clone} method allows arbitrary code, \emph{Framer}s which contain information which
+As such, \framer{}'s which can be used with the \listener{} trait must implement \texttt{Clone}.
+Since \texttt{Clone}'s \texttt{clone} method allows arbitrary code, \framer{}s which contain information which
 shouldn't be duplicated rather reconstructed, the implementation can do that as required.
 
 The \connection{} and \listener{} traits and the \preconnection{} struct will be generic over the framer
@@ -297,10 +297,10 @@ An alternative approach is to have the traits generic over the data which the \c
 The issue with this approach is the compiler cannot ensure a \connection{} has certain properties which methods
 could rely on.
 For example, a method could require a \connection{} which is framed with TLS .
-If the \connection{} is generic over the \emph{Framer}, the compiler can ensure only \connection{}s which are
+If the \connection{} is generic over the \framer{}, the compiler can ensure only \connection{}s which are
 framed with TLS are used, ensuring the data being transmitted is encrypted.
-Furthermore, a collection of traits a \emph{Framer} could implement could be created to ensure only \connection{}s
-with \emph{Framer}s which have specific properties can be used with certain methods.
+Furthermore, a collection of traits a \framer{} could implement could be created to ensure only \connection{}s
+with \framer{}s which have specific properties can be used with certain methods.
 
 \subsection{Framer}\label{subsec:framer}
 \begin{lstlisting}[float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
@@ -324,16 +324,16 @@ pub trait Framer<S, R>: Send + Sync + 'static {
 }
 \end{lstlisting}
 
-A \emph{Framer} trait defines a type which can frame and deframe a given piece of data, as well as optionally store
+A \framer{} trait defines a type which can frame and deframe a given piece of data, as well as optionally store
 metadata for use in framing and deframing.
 Datagram-orientated transport protocols like UDP have defined boundaries for messages, therefore don't require a method
 of defining these boundaries.
 Stream-orientated transport protocols like TCP do not have defined boundaries as they present a stream of bytes.
-A \emph{Framer} defines the message boundaries, for example prepending the message with the length of the message or
+A \framer{} defines the message boundaries, for example prepending the message with the length of the message or
 defining an end-of-message sequence.
 
-The \emph{Framer} must be generic over the data types it will frame and deframe.
-By having a \emph{Framer} be generic over both the data it can frame and deframe, different types can be used for input
+The \framer{} must be generic over the data types it will frame and deframe.
+By having a \framer{} be generic over both the data it can frame and deframe, different types can be used for input
 and output, removing the chance of the end user using the incorrect data.
 The Input and Output types are defined as associated types.
 This allowed the implementation specify the accepted types, rather than the end user, which allows an implementation to
@@ -345,36 +345,36 @@ Such an approach would make it very difficult to work with header information.
 For example, a HTTP framer would not be able to return the status code to the end user.
 Associated type mean the implementation can limit the types the end user can use to type which handle such header data.
 These types can contain their own generic parameters, for example a HTTPResponse object could have a generic type for
-the body of the response, which can be restricted to types which implement \emph{Decode}.
+the body of the response, which can be restricted to types which implement \decode{}.
 Listing~\ref{lst:framer} shows the Input and Output types as associated types.
 The MetaKey and MetaValue types are associated types because they should not be specified by the end user.
 
-All implementations of \emph{Framer} must implement \texttt{Send} and \texttt{Sync}, as well the type definition having
+All implementations of \framer{} must implement \texttt{Send} and \texttt{Sync}, as well the type definition having
 a static lifetime.
-\texttt{Send} and \texttt{Sync} are required to allow the \emph{Framer} to be passed between threads and accessed from
+\texttt{Send} and \texttt{Sync} are required to allow the \framer{} to be passed between threads and accessed from
 different threads.
 While a \texttt{Future} does not specify it will be executed on a different thread than it was created, but it allows
-it so a \emph{Framer} must be able to be passed to another thread.
-Since \emph{Framer}'s methods use \texttt{\&mut self}, a \emph{Framer} maybe accessed by a thread other than the thread
-which created, so a \emph{Framer} must be able to be accessed from different threads.
+it so a \framer{} must be able to be passed to another thread.
+Since \framer{}'s methods use \texttt{\&mut self}, a \framer{} maybe accessed by a thread other than the thread
+which created, so a \framer{} must be able to be accessed from different threads.
 Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
 lifetime of the function.
 \texttt{Future}s require all types which are used within the \texttt{Future} must live longer than the \texttt{Future}.
 Rust allows type to be defined within functions, so the type definition would live until the function returned.
-Since a \texttt{Future} can take an indeterminate length of time to complete, all \emph{Framer} type definitions must
+Since a \texttt{Future} can take an indeterminate length of time to complete, all \framer{} type definitions must
 have a static lifetime, which means it lives for the lifetime of the program.
 
 An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
 Using different types for framing and deframing means the end user cannot accidentally send the data they have received
 back to the sender.
-A HttpRequest object and HttpResponse object would contain a type which implements the \emph{Encode} and \emph{Decode}
+A HttpRequest object and HttpResponse object would contain a type which implements the \encode{} and \decode{}
 trait respectively.
 
 \subsection{Encode and Decode}\label{subsec:encode-and-decode}
 The \connection{} sends and recieves typed messages, but the underlying protocol stack operates on raw bytes,
 therefore messages must be able to be converted to and from raw bytes.
-\emph{Encode} defines a type which can be encoded into bytes for transport.
-\emph{Decode} defines a type which can be decoded from bytes, and support incomplete data when decoding.
+\encode{} defines a type which can be encoded into bytes for transport.
+\decode{} defines a type which can be decoded from bytes, and support incomplete data when decoding.
 
 \begin{lstlisting}[float=h, label=lst:encode, caption={The Encode trait, showing the size\_hint method.}]
 pub trait Encode {
@@ -396,22 +396,22 @@ pub trait Decode {
 }
 \end{lstlisting}
 
-As shown in Listing~\ref{lst:encode} the \emph{Encode} trait should also provide a hint to the encoded size of the type,
+As shown in Listing~\ref{lst:encode} the \encode{} trait should also provide a hint to the encoded size of the type,
 to allow for memory to be preallocated if required.
 A default implementation of this method is provided since this is used solely for optimisation.
-Both \emph{Encode} and \emph{Decode} will have an associated error type, which must implement both \texttt{Send} and
+Both \encode{} and \decode{} will have an associated error type, which must implement both \texttt{Send} and
 \texttt{Error}.
 This error type will be use for the \texttt{Err} variant of the returned results from the decode or encode methods.
 Requiring the type to implement the \texttt{Error} trait ensures the type is a valid error, and the \texttt{Send} trait
 ensures the type can be sent between threads, which may occur with \texttt{Future}s.
-Allowing an implementation of the \emph{Encode} or \emph{Decode} traits to return their own error type makes
+Allowing an implementation of the \encode{} or \decode{} traits to return their own error type makes
 implementing the trait simpler as the implementation does not have to convert their error types into a TAPS error.
 There exists the \emph{Serialize} and \emph{Deserialize} traits from the Serde trait, which appear to be similar to
-\emph{Encode} and \emph{Decode}.
+\encode{} and \decode{}.
 The aim of Serde's traits it to map between an Rust's data model and Serde's data model.
 Serde's data model is designed to be used in conjunction with existing data formats, rather than an arbitrary collection
 of bytes.
-Therefore, the \emph{Encode} and \emph{Decode} traits are needed to map between typed, structured data and raw bytes.
+Therefore, the \encode{} and \decode{} traits are needed to map between typed, structured data and raw bytes.
 Serde's trait would be used in \emph{Framers} to convert structured data to and from a particular data format, which is
 then framed for sending and deframed when read.
 
@@ -425,15 +425,15 @@ pub enum Error<E> {
 \end{lstlisting}
 
 In order to handle incomplete data when receiving data from a \connection{}, the error type for both the
-\emph{Framer}'s \texttt{deframe} and \emph{Decode}'s \texttt{decode} methods must indicate this.
+\framer{}'s \texttt{deframe} and \decode{}'s \texttt{decode} methods must indicate this.
 As shown in Listings~\ref{lst:decode} and~\ref{lst:framer}, the returned error types are wrapped in \texttt{Error},
 which is defined as shown in Listing~\ref{lst:codecError}.
 This is based of the method used by~\cite{geal_nomerrrust_} for the nom crate.
-If the \emph{Framer} or \emph{Decode} runs out of data while deframing or decoding respectively, it will return a
+If the \framer{} or \decode{} runs out of data while deframing or decoding respectively, it will return a
 \texttt{Error::Incomplete}, to signify to the \connection{} to get more data.
 Both the \texttt{decode} and \texttt{deframe} methods \texttt{Ok} and \texttt{Err} also contain the remaining data which
 has not be used from the input.
-Using \texttt{BytesMut} allows the implementations of \emph{Decode} and \emph{Framer} to advance the start of the
+Using \texttt{BytesMut} allows the implementations of \decode{} and \framer{} to advance the start of the
 current buffer internally, and allows the \connection{} implementation to continue to read more data into the same
 buffer.
 For example, a HTTP framer would attempt to read until the end of a header line.

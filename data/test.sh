@@ -1,4 +1,4 @@
-address="example.com google.com facebook.com reddit.com github.com wikipedia.com moodle.gla.ac.uk fcc.gov mariadb.com protondb.com docs.rs tokio.rs learnxinyminutes.com nk.pl onet.pl zus.pl"
+address="example.com google.com facebook.com reddit.com github.com wikipedia.com moodle.gla.ac.uk fcc.gov mariadb.com protondb.com docs.rs tokio.rs learnxinyminutes.com nk.pl onet.pl"
 
 for cmd in "./sockets" "./taps_example"; do
 	for addr in $address; do

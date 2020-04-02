@@ -218,3 +218,10 @@
 
 ## Week 27
 ### 30 Mar 2020
+* *4 hours* Add section on receiving data
+
+### 31 Mar 2020
+* *4 hours* Write eval code to open 10 connections per domain
+
+### 01 Apr 2020
+* *6 hours* Redo eval code timings and analyse the data

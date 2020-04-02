@@ -24,7 +24,7 @@ Happy Eyeballs~\citep{pauly_happyeyeballsversion_}.
 Using Rust's \texttt{Future} mechanism, the futures crate's \texttt{select\_ok()} method and both Tokio's task mechanism
 and \texttt{delay\_for()} method, this can be implemented succinctly.
 
-\begin{lstlisting}[float=h, label=fig:racer, caption={The connection racing implementation, with the delay on IPv4
+\begin{lstlisting}[float=h!, label=fig:racer, caption={The connection racing implementation, with the delay on IPv4
         addresses.}]
 
 async fn add_delay(addr: SocketAddr, props: Arc<TransportProperties>) -> Result<Connecting, Error> {
@@ -38,7 +38,7 @@ async fn add_delay(addr: SocketAddr, props: Arc<TransportProperties>) -> Result<
 }
 pub async fn race<E, F>(
     endpoint: E,
-    props: Arc<TransportProperties>,
+    props: TransportProperties,
     framer: F,
 ) -> Result<Box<dyn crate::Connection<F>>, Error>
 where
@@ -46,6 +46,7 @@ where
     <E as Endpoint>::Error: 'static,
     F: Framer,
 {
+    let props = Arc::new(props);
     ::futures::future::select_ok(
         endpoint
             .resolve()
@@ -83,29 +84,32 @@ returns a \texttt{Future} which resolves into either the first of the given \tex
 \texttt{Future}s.
 The \texttt{map(|x| x.0)} drops the list of still executing \texttt{Future}s since they haven't won the race.
 
-Tokio's \texttt{task::spawn()} function requires the \texttt{Future} it is given to have a \texttt{'static} definition.
-This is generally best done through an \texttt{async} function which is defined outside of any scope, giving it a
+Each connection attempt needs read-only access to the \texttt{TransportProperties} given to the \texttt{race()}
+function.
+In synchronous code, each connection attempt would be given an immutable reference to the \texttt{TransportProperties}.
+Since there is no guarentee as to when a \texttt{Future} will complete, this cannot be done as the compiler cannot
+ensure the reference will live long enough.
+Therefore, the \texttt{TransportProperties} is wrapped in an \texttt{Arc}\footnote{Atomic Reference Count}, which moves
+the \texttt{TransportProperties} on to the heap, and does not deallocate it until all “clones” of it are released.
+\texttt{Arc}'s implementation of \texttt{clone()} creates a new stack-allocated reference to the heap-allocated object,
+and increments the reference count atomically.
+When one of these "clones" goes out of scope, it's \texttt{Drop} implementation ensures the reference count is
+decremented atomically.
+If the reference count becomes \(0\) by one of these the allocations, the heap allocation is also deallocated.
+Using an \texttt{Arc} means the job of ensuring the \texttt{TransportProperties} is deallocated at the correct time is
+no longer handled by the compiler, rather the runtime reference count mechanism.
+Rust provides both an \texttt{Arc} and \texttt{Rc} which are both reference counting smart pointers, but differ in the
+type of the reference count.
+\texttt{Rc} uses a traditional integer, where as \texttt{Arc} uses an atomic interger, allowing for it to be modified
+by multiple threads safely.
+Since a \texttt{Future} can be executed on a different thread than the one which created it, an \texttt{Arc} must be
+used as there could be any number of connection attempts happening on any number of threads.
+Furthermore, Tokio's \texttt{task::spawn()} requires the \texttt{Future} it's given to have a defintion with a
 \texttt{'static} lifetime.
-For the \texttt{async} function's resulting \texttt{Future} to have a \texttt{'static} lifetime, it cannot have any
-non-\texttt{'static} lifetime references in its arguments or return value.
-If \texttt{add\_delay()}'s \texttt{props} argument was a reference to a \emph{TransportProperties}, Tokio's task
-mechanism couldn't be used.
-Through the use of an \texttt{Arc}\footnote{Atomic Reference Counting}, the \emph{TransportProperies} can be passed into
-\texttt{add\_delay()} without cloning the whole object.
-This is because \texttt{Arc}'s implementation of the \texttt{clone()} method is to create a new reference to the
-underlying object and increment the reference count.
-Avoiding cloning the \emph{TransportProperties} is beneficial because it could result in another heap allocation, which
-would be detrimental for performance since this clone would have to done for each connection attempt.
-
-The \emph{TransportProperties} doesn't have it's ownership given to the \texttt{race} function (passed by value),
-because the \emph{TransportProperties} is stored in the \preconnection{} being used to create the \connection{}.
-Since a \preconnection{} is a configuration object, it would be beneficial to be able to repeatedly create
-\connection{}s from the same \preconnection{}.
-Therefore, giving \texttt{race()} ownership of the \emph{TransportProperties} cannot be done as it would require
-either cloning the \emph{TransportProperties} out of the \preconnection{} or also giving owership of the
-\preconnection{}.
-Instead, the \emph{TransportProperties} is stored within an \texttt{Arc} in the \preconnection{}, which is given to the
-\texttt{race()} function.
+The definition of a \texttt{Future} created from a function which takes a reference as a parameter has a lifetime the
+same as the reference.
+Using an \texttt{Arc} removes the need for a reference, so the \texttt{Future} can match the requirements for Tokio's
+\texttt{task::spawn()}.
 
 During the race, a connection can either be connecting or connected, representing a racing connection and a winning
 connection.
@@ -121,7 +125,7 @@ A \connection{} and \listener{} require and can optionally make use of a differe
 and remote endpoints, as discussed in Section~\ref{subsec:connection} and Section~\ref{subsec:listener} respectively.
 Two approaches to upholding these requirements exist: a runtime check which returns an error if a required endpoint is
 not given, or a compile time check.
-As discussed in Section~\ref{subsec:optional}, a compile time check is perferred as it prevents invalid code early in
+As discussed in Section~\ref{subsec:optional}, a compile time check is preferred as it prevents invalid code early in
 the production cycle.
 
 \begin{figure}[h]
@@ -148,7 +152,7 @@ The \texttt{initiate()} method is only implemented if \texttt{R} implements the 
 \texttt{NoEndpoint} doesn't, therefore if the compiler allows a call to the \texttt{initiate()} method, a remote
 endpoint must have be specified and the state machine is in either the “Remote Endpoint Only” or “Both Endpoints”
 states.
-Similarly, the \texttt{listen()} method is only implemented if \texttt{L} implements the endpoint trait, therefore
+Similarly, the \texttt{listen()} method is only implemented if \texttt{L} implements the \Endpoint{} trait, therefore
 if a call to the \texttt{listen()} method is allowed by the compiler, a local endpoint must have been specified and the
 state machine must be in either the “Local Endpoint Only” or “Both Endpoints” state.
 
