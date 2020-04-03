@@ -119,8 +119,12 @@ It will expose a mechanism to decouple the user from the underlying protocol sta
 constraints on the possible protocols which can be used.
 
 Three major attempts to create a modern alternative to BSD Sockets have been attempted: Post Sockets, NEAT and TAPS.
-Post Sockets is a message-orientated, asynchronous and transport-layer agnostic API .
-NEAT is
+Post Sockets is an API which aims to decouple programs from the transport-layer protocols
+(See Section~\ref{sec:post-sockets}).
+NEAT is an API which aims to allow transport-layer protocols to be implemented in user-space
+(See Section~\ref{sec:neat}).
+TAPS is an API which aims to provide a unified API for connections which communicate the same data conceptually
+(See Section~\ref{sec:taps}).
 
 The structure of this document is as follows.
 First, a discussion of Post Sockets, NEAT and TAPS as the major infulences of this work, and the Rust programming

@@ -61,7 +61,7 @@ The new syntax allows for asynchronous code to be written quickly and cleanly wi
 manually handling \texttt{Future}s.
 
 \section{BSD Sockets}\label{sec:bsd-sockets}
-The Berkeley socket API (BSD sockets) allows an application to communicate over the Internet since 1983.
+The Berkeley socket API (BSD Sockets) allows an application to communicate over the Internet since 1983.
 A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has
 been created.
 This allows a programmer with understanding of local file I/O to work with network sockets.
@@ -72,23 +72,31 @@ stack, each providing different grantees and properties, and the application mus
 Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not
 need to manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
 
-Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application
+Since BSD Sockets required applications to decide the protocol stack, changing protocols would require the application
 to be modified.
 This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6
 rather than only the network implementation.
-BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
+BSD Sockets defined the default protocol to handle streams and datagrams are
+TCP\footnote{Transmission Control Protocol - IETF RFC793} and UDP\footnote{User Datagram Protocol - IETF RFC768},
+respectively.
 While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the
-development of alternative protocols such as DCCP and SCTP .
+development of alternative protocols such as DCCP\footnote{Datagram Congestion Control Protocol - IETF RFC4340} and
+SCTP\footnote{Stream Control Transmission Protocol - IETF RFC4960}.
 
-Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O .
-Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous
-API .
-An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better
-performance.
+BSD Sockets primarily exposes a synchronous API, which does not match the nature of a network and does not reflect
+modern network programming techniques.
+While there is a non-blocking mode for BSD Sockets, it is error-prone and cumbersome to use effectively.
+Furthermore, modern network programming utilises callbacks or futures, which BSD Sockets has no support for.
+A custom event loop needs to be created and each socket needs to be polled by the application, rather than the API's
+implementation.
 
 \section{Post Sockets}\label{sec:post-sockets}
 Post Sockets~\citep{kuhlewind_postsocketsabstract_} is an API intended to provide an asynchronous, message-orientated,
-transport-protocol independent networking API to be used instead of BSD Sockets (sockets).
+transport-protocol independent networking API to be used instead of BSD Sockets (Sockets).
+\citet{kuhlewind_postsocketsabstract_} identified Sockets requires the user to tightly couple their program with a
+specific transport-protocol.
+This lead Post Sockets to be designed, so the user relies on a set of semantics, which could be upheld by an arbitrary
+protocol, rather than a specific protocol.
 
 As~\cite{kuhlewind_postsocketsabstract_} explains, modern networked devices have multiple interfaces, which would
 provide natural support for multipath communications using protocols such as
@@ -104,7 +112,8 @@ Typed messages would be given to or received from a \emph{Carrier} (protocol sta
 receives messages) as this allows both byte-stream and datagram oriented transport protocols to be supported.
 
 Another point raised by~\cite{kuhlewind_postsocketsabstract_} is layering encryption over the existing sockets API .
-Opening a TCP connection with Transport Layer Security (TLS) requires two handshakes to happen sequentially: the
+Opening a TCP connection with
+TLS\footnote{Transport Layer Security - IETF RFC8446} requires two handshakes to happen sequentially: the
 transport-layer handshake and the encryption-layer handshake, which increases latency.
 To avoid this Post Sockets defines an \emph{Association} object, which contains long-term state between a local endpoint
 and a remote endpoint.
@@ -115,16 +124,17 @@ encryption-layer handshake between the same local endpoint and remote endpoint.
 \section{NEAT}\label{sec:neat}
 The NEAT API~\citep{khademi_neatplatformprotocolindependent_2017} is a library to provide a platform and protocol
 agnostic network access.
-It removes large amounts of existing boilerplate networking code, such as DNS resolution, and decouples the application
-from the protocols used.
-This allows for smaller application code bases, and increased uptake in alternative protocols.
+\citet{khademi_neatplatformprotocolindependent_2017} identifies transport-layer protocols are implemented within the
+operating system's kernel, and as such are bound by the release cycle of the kernel.
+NEAT has been designed as a user-space library, rather then a kernel-space library like Sockets, to allow for new
+transport-layer protocols to be included, irrespective of the kernel release cycle.
 
 The duration of kernel release cycles is one of the reasons alternative transport layer protocols have limited uptake.
 To add a new transport protocol to sockets, a new kernel release must be developed with this new protocol
 NEAT is a user-space library, therefore supports both kernel-space and user-space transport protocols.
 User-space transport protocols can be implemented and included in NEAT, independent of the kernel release cycle.
-This removes the need to implement new transport protocols over UDP, removing the often duplicated code to use UDP
-as a substrate for the protocol.
+This removes the need to implement new transport protocols over UDP,
+removing the often duplicated code to use UDP as a substrate for the protocol.
 
 Existing network applications must specify the protocols they wish to use.
 NEAT does not require the application to do this, rather NEAT determines a collection of suitable protocols internally
@@ -134,7 +144,13 @@ This allows for alternative protocols, including user-space protocols, to be att
 as fallbacks.
 
 \section{TAPS}\label{sec:taps}
-Transport Services~\citep{pauly_architecturetransportservices_2020} is proposed standard from the TAPS working group.
+Transport Services~\citep{pauly_architecturetransportservices_2020} is proposed standard from the IETF TAPS working
+group.
+\citet{pauly_architecturetransportservices_2020} identified BSD Sockets did not allow sockets which conceptually
+communicated the same data, could not make use of the same API calls.
+For example, an encrypted TLS stream could not use the same \texttt{send()} and \texttt{recv()} calls as an unencrypted
+TCP stream.
+Therefore, TAPS was designed to provide a unified API for all connections which communicate the same data conceptually.
 
 \begin{figure}
     \begin{verbatim}
@@ -162,6 +178,56 @@ Transport Services~\citep{pauly_architecturetransportservices_2020} is proposed 
             (Source:~\citet[fig:4]{pauly_architecturetransportservices_2020})}
     \label{fig:tapsConLife}
 \end{figure}
+
+TAPS is designed around the lifecycle of a \connection{} object, which is a representation of one or more transport
+protocols that send and recieve data between a local and remote machine.
+As shown in Figure~\ref{fig:tapsConLife}, a \connection{} object has three stages in its lifecycle: Pre-Establishment,
+Established and Termination.
+
+Pre-Establishment is the stage where the \connection{} is created, either directly via the \preconnection{} object's
+\texttt{Initiate()}, \texttt{InitiateWithSend()} and \texttt{Rendezvous()} methods, or when a \listener{} receives a
+\connection{}.
+The \texttt{Initiate()} method is a traditional connection establishment between a local and remote,
+\texttt{InitiateWithSend()} method allows data to be sent with the connection establishment
+(0-RTT\footnote{Zero Round Trip Time}), and \texttt{Rendezvous()} is use to establish a peer-to-peer connection.
+A \preconnection{} represents a potential \connection{}, containing the parameters of a possible future \connection{}.
+It contains the definition of the local and/or remote machine via the Local or Remote Endpoints respectively, the
+properties the underlying transport protocol must have, and optional security parameters.
+A \listener{} object can be created from a \preconnection{} to listen for incoming \connection{}s which match the
+properties the creating \preconnection{} has.
+
+Established is the stage when the \connection{} sends and receives data.
+\connection{}s communicate with strongly typed messages, rather than the raw bytes the underlying transport protocols
+may use.
+A \connection{} produces events for when a message been received and when data has been successfully sent, as well as
+to signify errors have occurred.
+These events are the mechanism TAPS uses to ensure it's API is asynchronous, but an implementation of TAPS does not have
+to expose these events directly to the user.
+The implementation is free to expose the asynchronous nature of the API is the method which idiomatic for the language,
+such as futures or call backs.
+
+Termination is the stage where the \connection{} is closed and cleaned up.
+The user will call the \connection{}'s \texttt{close()} or \texttt{abort()} methods to gracefully or forceably end
+the \connection{} and cleanup its resources.
+
+No where in the TAPS API is the user able to specify the underlying transport protocol, Rather they specify the
+properties the underlying transport protocol must uphold.
+\citet[§~5.2]{trammell_abstractapplicationlayer_2020} has defined a set of properties underlying protocols can have,
+and the preference a user can have for a property to be upheld.
+The implementation of TAPS creates a list of transport protocols it supports, in order of most to least preferred,
+excluding any supported protocols which either do not support a “Require” property or support a “Prohibit” property.
+A transport protocol is deemed more preferred over another if it contains more “Prefer” properties and/or less “Avoid”
+properties.
+
+Since TAPS aims to provide a unified API for connections which communicate the same data, the same data must be able to
+be sent/received on different transport protocols.
+The two types of transport protocols are byte-stream orientated and datagram orientated.
+Datagram orientated transport protocols have natural message boundaries as the boundaries of the datagrams, but
+byte-stream orientated transport protocols lack this.
+TAPS defines a \framer{} to define message boundaries for protocols which may or may not have natural message
+boundaries.
+A simple \framer{} could prepend each message with the length of the message, or define an end-of-message sequence for
+example.
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}
