@@ -6,11 +6,12 @@
 %
 % put any additional packages here
 %
+\usepackage[l2tabu, orthodox]{nag}
+\usepackage[utf8x]{inputenc}
 \usepackage{listings-rust}
 \usepackage{dirtree}
 \usepackage{pgf}
 \usepackage[bottom]{footmisc}
-\usepackage{graphicx}
 \lstset{language=Rust}
 
 \begin{document}
@@ -94,47 +95,41 @@
 % reset page numbering. Don't remove this!
 \pagenumbering{arabic}
 
-The Berkeley socket API (BSD sockets) allows an application to communicate over the Internet since 1983.
-A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has
-been created.
-This allows a programmer with understanding of local file I/O to work with network sockets.
-While this model of network I/O has some similarities to local file I/O, in reality they are distinct and should be
-treated as such.
-One prime example of this is how network I/O has a range of protocols which can be used at each layer of the networking
-stack, each providing different grantees and properties, and the application must specify which protocol stack to use.
-Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not
-need to manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
+The way programs have interacted with networks has not changed since the 1980s with the creation of the Berkeley Sockets
+API (BSD Sockets).
+Since then, what programs use networks for, and the amount programs use networks has changed drastically, but they all
+continue to use the same BSD Sockets API .
+BSD Sockets have become less applicable as the standard API over the years, but no API has been able to replace it.
 
-Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application
-to be modified.
-This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6
-rather than only the network implementation.
-BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
-While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the
-development of alternative protocols such as DCCP and SCTP .
+BSD Sockets was designed to be a simple API which followed the same structure as local file access APIs.
+While this approach likely contributed to the APIs widespread use and longevity, it does not match the true nature of
+networks.
+File access is a largely synchronous and reliable operation with limited customisation options for how to carry out the
+operation.
+Networking is inherently asynchronous and unreliable in its operation, and operates on a customisable protocol stack.
+While BSD Sockets has been extended over the years to support asynchronous operations with its non-blocking mode, it is
+extremely error prone and cumbersome to use.
+BSD Sockets does expose a mechanism to customise the protocol stack, but it requires the user of the API to select which
+protocols and has a limited selection of protocols, which are specified by the operating system.
 
-Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O .
-Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous
-API .
-An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better
-performance.
+The aim of this project is to design and implement a new networking API which overcomes the limitations of the BSD
+Sockets API .
+The API will be exclusively asynchronous and raise the level of the networking stack the user works with.
+It will expose a mechanism to decouple the user from the underlying protocol stack, while allowing the user to specify
+constraints on the possible protocols which can be used.
 
-To resolve the above issues, a new networking API must be created.
-Such an API must be protocol-agnostic and asynchronous, while allowing not reducing the possible uses of the API in
-comparison to BSD sockets.
-By being protocol-agnostic, the API decouples applications from the transport-layer, allowing new protocols to be
-designed and used without applications having to be modified.
-Modern network programming relies on asynchronous networking, which previously would require boilerplate over BSD
-sockets.
-By having the API be asynchronous, this boilerplate can be removed.
+Three major attempts to create a modern alternative to BSD Sockets have been attempted: Post Sockets, NEAT and TAPS.
+Post Sockets is a message-orientated, asynchronous and transport-layer agnostic API .
+NEAT is
 
-The aim of this project is to create an API which fulfills these requirements, and evaluate it in comparison to BSD
-sockets.
-The IETF Transport Services API will provide the overall design of the API, and Rust will be the implementation language
-used.
-Rust provides high-level safety with low-level performance and access, while also having be designed with concurrent
-programming in mind.
-
+The structure of this document is as follows.
+First, a discussion of Post Sockets, NEAT and TAPS as the major infulences of this work, and the Rust programming
+language, in Chapter~\ref{ch:background}.
+Then in Chapter~\ref{ch:analysis/requirements}, the requirements for the projects are outlined and discussed.
+Chapter~\ref{ch:design} then discusses the high-level design of the API the project will create.
+Following on from that is a discussion of the implementation of the API in Chapter~\ref{ch:implementation}.
+With the implementation in place, Chapter~\ref{ch:evaluation} evaluates the design and the implementation of the API .
+Finally, Chapter~\ref{ch:conclusion} discusses possible future work on the project and concludes the document.
 
 %Why should the reader care about what are you doing and what are you actually doing?
 %\section{Guidance}
@@ -224,6 +219,9 @@ programming in mind.
 
 %==================================================================================================================================
 \chapter{Conclusion}\label{ch:conclusion}
+The aim of this project was to define a modern alternative to the BSD Sockets API .
+BSD Sockets was defined in the 1980s, and has continued to be the standard networking API, dispite it not being fit for
+modern networked programs.
 %Summarise the whole project for a lazy reader who didn't read the rest (e.g. a prize-awarding committee).
 %\section{Guidance}
 %\begin{itemize}

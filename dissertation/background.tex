@@ -60,6 +60,32 @@ at which point the function will continue until the next \texttt{await} or the f
 The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared too
 manually handling \texttt{Future}s.
 
+\section{BSD Sockets}\label{sec:bsd-sockets}
+The Berkeley socket API (BSD sockets) allows an application to communicate over the Internet since 1983.
+A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has
+been created.
+This allows a programmer with understanding of local file I/O to work with network sockets.
+While this model of network I/O has some similarities to local file I/O, in reality they are distinct and should be
+treated as such.
+One prime example of this is how network I/O has a range of protocols which can be used at each layer of the networking
+stack, each providing different grantees and properties, and the application must specify which protocol stack to use.
+Whereas in file I/O, there exists a protocol stack (file systems, storage interface, etc), but the application does not
+need to manipulate the stack, as each protocol is a platform-specific way to handle the same operations.
+
+Since BSD sockets required applications to decide the protocol stack, changing protocols would require the application
+to be modified.
+This may have contributed to the slow adoption of IPv6, since every application would have to be rewritten to use IPv6
+rather than only the network implementation.
+BSD sockets defined the default protocol to handle streams and datagrams are TCP and UDP, respectively.
+While this may have aided in the adoption of these protocols and the growth of the Internet, it also hindered the
+development of alternative protocols such as DCCP and SCTP .
+
+Furthermore, BSD sockets exposes a synchronous API, providing blocking I/O .
+Modern programming practices have changed to encourage the use of non-blocking I/O through the use of an asynchronous
+API .
+An asynchronous API allows the application to pass scheduling I/O calls to the implementation, often providing better
+performance.
+
 \section{Post Sockets}\label{sec:post-sockets}
 Post Sockets~\citep{kuhlewind_postsocketsabstract_} is an API intended to provide an asynchronous, message-orientated,
 transport-protocol independent networking API to be used instead of BSD Sockets (sockets).
@@ -108,7 +134,34 @@ This allows for alternative protocols, including user-space protocols, to be att
 as fallbacks.
 
 \section{TAPS}\label{sec:taps}
-Transport Services~\citep{pauly_architecturetransportservices_2019} is proposed standard from the TAPS working group.
+Transport Services~\citep{pauly_architecturetransportservices_2020} is proposed standard from the TAPS working group.
+
+\begin{figure}
+    \begin{verbatim}
+    Pre-Establishment     :       Established             : Termination
+    -----------------     :       -----------             : -----------
+                          :                               :
++-- Local Endpoint        :           Message             :
++-- Remote Endpoint       :    Receive() |                :
++-- Transport Properties  :       Send() |                :
++-- Security Parameters   :              |                :
+|                         :              |                :
+|               InitiateWithSend()       |        Close() :
+|   +---------------+   Initiate() +-----+------+ Abort() :
++---+ Preconnection |------------->| Connection |-----------> Closed
+    +---------------+ Rendezvous() +------------+         :
+   Listen() |             :           |     |             :
+            |             :           |     v             :
+            v             :           | Connection        :
+    +----------+          :           |   Ready           :
+    | Listener |----------------------+                   :
+    +----------+  Connection Received                     :
+                          :                               :
+    \end{verbatim}
+    \caption{Diagram to show the lifetime of a Connection object
+            (Source:~\citet[fig:4]{pauly_architecturetransportservices_2020})}
+    \label{fig:tapsConLife}
+\end{figure}
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}

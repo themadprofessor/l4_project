@@ -55,9 +55,12 @@ While using trait objects would add a performance overhead due to pointer indire
 of dynamic linking and alternative distribution out ways this.
 
 \subsection{Preconnection}\label{subsec:preconnection}
+First the user will create a \preconnection{}, which will be used to define the properties a \connection or \listener
+must have.
 A \preconnection{} object is a configuration object.
 It contains the endpoints, both local and remote, a \connection{} or \listener{} should connect or bind too
-respectively, as well as the properties the resultant \connection{} or \listener{} should have.~\cite[§~5.2]{trammell_abstractapplicationlayer_2019} defines a set of properties a \preconnection{} can
+respectively, as well as the properties the resultant \connection{} or \listener{} should have.
+\cite[§~5.2]{trammell_abstractapplicationlayer_2020} defines a set of properties a \preconnection{} can
 configure.
 
 \begin{lstlisting}[float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
@@ -88,6 +91,8 @@ The generic parameters L and R are used to represent the possible local and remo
 See Section~\ref{sec:preconnection-endpoint-safety} for details on these parameters.
 
 \subsection{Implementation}\label{subsec:implementation}
+While the user should not focus on the underlying implementation of the traits, it needs to be defined for the
+\preconnection{} to know how to instantiate them.
 The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
 public to allow the end user to select from multiple implementations, and create custom implementations.
 The specific implementation will be given \preconnection{}'s \texttt{I} generic parameter, which implements the
@@ -151,6 +156,8 @@ fn example() {
 \end{lstlisting}
 
 \subsection{Endpoint}\label{subsec:endpoint}
+A \connection{} and \listener{} need to know what to connect to or listen to respectively, and this is specfied in the
+creating \preconnection{} by giving it either local or remote \Endpoint{}s.
 An \Endpoint{} is a type which represents a possible either a local or remote endpoint.
 This could be a string containing a domain name, or an IPv6 address and port number for example.
 It does not represent an endpoint, rather a possible endpoint which needs to be resolved into a \texttt{SocketAddr}.
@@ -189,6 +196,8 @@ This can lead to a long type definition for \texttt{Iter}, but this can be media
 \texttt{type\_alias\_impl\_trait}\footnote{\url{https://github.com/rust-lang/rust/issues/63063}}.
 
 \subsection{Connection}\label{subsec:connection}
+Once the \preconnection{} is fully configured, it's \texttt{initate()} method can be called to initate connection
+establish ment to the \preconnection{}s remote \Endpoint{}.
 A \connection{} object represents a messaged-orientated connection between a local and remote endpoint.
 It wraps an underlying protocol stack the user of the API specifies with the \emph{Implementation}
 parameter of the \preconnection{} which crated the \connection{}.
@@ -248,6 +257,8 @@ If a \connection{} has a \texttt{Drop} implementation, it should have similar se
 discard errors produced.
 
 \subsection{Listener}\label{subsec:listener}
+Once the \preconnection{} is fully configured, it's \texttt{listen()} method can be called to bind a \listener{} to the
+\preconnection{}'s local \Endpoint{}.
 A \listener{} represents a stream of incoming \connection{}s for a local endpoint.
 It is bound to the local endpoint in the creating \preconnection{}, and listens for incoming \connection{}s,
 represented as an asynchronous stream of \emph{Connections}.
@@ -303,6 +314,10 @@ Furthermore, a collection of traits a \framer{} could implement could be created
 with \framer{}s which have specific properties can be used with certain methods.
 
 \subsection{Framer}\label{subsec:framer}
+When a \connection{}'s \texttt{send()} method is called, the message it's given is framed by the \connection{}'s
+\framer{} before being passed to the underlying transport layer.
+Similiarly, during a \connection{}'s \texttt{recv()} method, when data is received, the message is deframed from the
+raw bytes by the \connection{}'s \framer{}.
 \begin{lstlisting}[float=h, label=lst:framer, caption={The Framer trait, showing the Send and 'static
 requirements for all implementers, and associated types.}]
 pub trait Framer<S, R>: Send + Sync + 'static {
@@ -371,6 +386,12 @@ A HttpRequest object and HttpResponse object would contain a type which implemen
 trait respectively.
 
 \subsection{Encode and Decode}\label{subsec:encode-and-decode}
+During a \connection{}'s \texttt{send()} method, the \connection{}'s \framer{} frames the message \texttt{send()} is
+given, and the \framer{} calls the message's \texttt{encode()} method to convert the message into raw bytes to be given
+to the underlying transport protocol.
+Similarly, the \connection{}'s \framer{} is called during the \connection{}'s \texttt{recv()} method once data is
+received, which first deframes the message before calling the message's \decode{} method to attempt to convert the
+raw bytes into a message.
 The \connection{} sends and recieves typed messages, but the underlying protocol stack operates on raw bytes,
 therefore messages must be able to be converted to and from raw bytes.
 \encode{} defines a type which can be encoded into bytes for transport.

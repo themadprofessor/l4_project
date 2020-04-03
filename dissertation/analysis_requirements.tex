@@ -1,12 +1,12 @@
-The project will aim to produce a high-level, typed and asynchronous networking API in the Rust programming language,
-making use of Rust's async/await syntax and Futures.
+The project will aim to produce a high-level, typed and asynchronous networking API, based on the IETF's TAPS, in the
+Rust programming language, making use of Rust's \asyncawait syntax and \texttt{Future}s.
 This API is intended to be a replacement for BSD sockets, and as such will provide similar functionality, albeit at a
 higher level.
 
 In this chapter we define a set of functional and non-functional requirements, splitting each into ''required'' and
 ''optional''.
-These requirements must fulfill the aims outlined in Chapter 1 and are intended to be built upon and make use of the
-prior research discussed in Chapter 2.
+These requirements must fulfill the aims outlined in Chapter~\ref{ch:introduction} and are intended to be built upon and
+make use of the prior research discussed in Chapter~\ref{ch:background}.
 
 \section{Functional Requirements}\label{sec:functional-requirements}
 
@@ -15,7 +15,8 @@ prior research discussed in Chapter 2.
 The API must provide enough functionality to support a single-client and single-server example.
 This is required, because this is a minimum requirement to be able to be a basic replacement for BSD sockets.
 Furthermore, most network communication occur this style, and the remaining can be recreated using this style.
-As such a Preconnection must be defined which can initiate a Connection object, or begin listening for Connections.
+As such a \preconnection{} must be defined which can initiate a \connection{} object, or begin listening for
+\connection{}s.
 
 The API must be asynchronous, utilising futures as the mechanism of handling asynchronous events.
 This is required, because one the main issues with BSD sockets discussed in chapter 1 was its synchronous nature.
@@ -23,11 +24,11 @@ Asynchronous network programming is the modern technique, as such must be the pr
 API .
 Futures are the de facto standard method for asynchronous programming in Rust, as such they shall be used.
 
-The API must define a Connection object which can send and receive typed data.
-As discussed in chapter 1, one of the issues with BSD sockets is they only support sending byte streams or byte
-datagrams for TCP and UDP sockets respectively.
-As such the API must expose a mechanism for typed data to be passed to a Connection object, which will converted into
-the appropriate byte structure by the Connection object.
+The API must define a \connection{} object which can send and receive typed data.
+As discussed in Chapter~\ref{ch:background}, one of the issues with BSD sockets is they only support sending byte
+streams or byte datagrams for TCP and UDP sockets respectively.
+As such the API must expose a mechanism for typed data to be passed to a \connection{} object, which will converted into
+the appropriate byte structure by the \connection{} object.
 
 The API must define a mechanism to frame messages of a known size.
 This is required, because in order to transform underlying transport layer data to and from useful message data,
@@ -43,18 +44,18 @@ knowing the size of the data being transferred.
 Since this section of the TAPS specification is currently not well-defined and is under continuous modification,
 this will not be required to be implemented by this project.
 
-The API could provide a Connection object which can receive partial data.
-Since the underlying transport layer could not provide reliable data transfer, the Connection object could provide
+The API could provide a \connection{} object which can receive partial data.
+Since the underlying transport layer could not provide reliable data transfer, the \connection{} object could provide
 partial data, which could be completed with subsequent packets.
 Since this section of the TAPS specification is currently not well-defined and is under continuous modification, this
 will not be required to be implemented by this project.
 
-The API could provide a mechanism to enforce Preconnection object validity at compile-time through the use of Rust's
+The API could provide a mechanism to enforce \preconnection{} object validity at compile-time through the use of Rust's
 type system.
-A Preconnection requires a remote endpoint or local endpoint in order to initiate a Connection or begin listening for
-Connections, respectively.
-This can be implemented through a runtime error trivially, but in order to ensure the API is as safe as possible, this
-could be implemented as a compile-time error.
+A \preconnection{} requires a remote endpoint or local endpoint to initiate a \connection{} or begin listening for
+\connection{}s, respectively.
+This can be implemented through a runtime error trivially, but to ensure the API is as safe as possible, this could be
+implemented as a compile-time error.
 Since implementing this as a compile-time error is non-trivial, and does not impact the usability of the API, this will
 not be required to implement this project.
 
@@ -62,12 +63,12 @@ not be required to implement this project.
 
 \subsection{Required}\label{subsec:required2}
 
-The API must expose a "self-documenting" API, meaning the names of methods, method arguments, objects and constants must be
+The API must expose a “self-documenting” API, meaning the names of methods, method arguments, objects and constants must be
 meaningful and describe their use.
 This ensures the API describes how to use itself through its naming, using explicit documentation to augment this description.
 Furthermore, this lowers to learning curve of the API, possibly increasing rate of adoption.
 
-The API must allow users of the API to provide their own types for sending and receiving over a Connection.
+The API must allow users of the API to provide their own types for sending and receiving over a \connection{}.
 Without this mechanism, the API will be very restrictive and not useful.
 The Rust ecosystem has support for arbitrary type serialisation and deserialisation through the Serde library, as such this
 will likely be used to provide this mechanism.
@@ -77,8 +78,5 @@ will likely be used to provide this mechanism.
 The API should not have a large impact performance over raw BSD sockets.
 A large performance impact will hinder the adoption of the API, and as such should be avoided.
 Since this is primarily a proof-of-concept project, this is not required, but should still be taken into account.
-
-\section{Guidance}\label{sec:guidance}
-Make it clear how you derived the constrained form of your problem via a clear and logical process. 
 
 %==================================================================================================================================
