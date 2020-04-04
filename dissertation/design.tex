@@ -34,7 +34,7 @@ needed and \texttt{close()} or \texttt{abort()} are called.
 Rust's \texttt{Drop} allows the user of the API to not call either \texttt{close()} or \texttt{abort()} explicitly, as
 it allows arbitrary code to be executed when a variable goes out of scope.
 Since utilising \texttt{Drop} does not allow for errors to be propagated back to the user, it will likely be similar to
-a \texttt{close()} call where all errors are silently discarded.
+a \texttt{close()} call where all errors are discarded.
 Section~\ref{subsec:connection} describes the difference between \texttt{close()} and \texttt{abort()}.
 See Section~\ref{subsec:framer} for details on why a \framer{} is required for a \connection{}.
 
@@ -60,8 +60,7 @@ must have.
 A \preconnection{} object is a configuration object.
 It contains the endpoints, both local and remote, a \connection{} or \listener{} should connect or bind too
 respectively, as well as the properties the resultant \connection{} or \listener{} should have.
-\cite[§~5.2]{trammell_abstractapplicationlayer_2020} defines a set of properties a \preconnection{} can
-configure.
+\cite[§~5.2]{trammell_abstractapplicationlayer_2020} defines a set of properties a \preconnection{} can configure.
 
 \begin{lstlisting}[float=h, label=lst:preconnection, caption={The Preconnection struct, showing the four
 generic parameters.}]

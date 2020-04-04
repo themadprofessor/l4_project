@@ -2,6 +2,8 @@ The project will aim to produce a high-level, typed and asynchronous networking 
 Rust programming language, making use of Rust's \asyncawait syntax and \texttt{Future}s.
 This API is intended to be a replacement for BSD sockets, and as such will provide similar functionality, albeit at a
 higher level.
+Since the project will be based on TAPS, \preconnection{}, \framer{}, \listener{} and \connection{} in this chapter
+follow the definition discussed in Section~\ref{sec:taps}, to be fully defined in Section~\ref{sec:abstract-api}.
 
 In this chapter we define a set of functional and non-functional requirements, splitting each into ''required'' and
 ''optional''.
@@ -11,6 +13,10 @@ make use of the prior research discussed in Chapter~\ref{ch:background}.
 \section{Functional Requirements}\label{sec:functional-requirements}
 
 \subsection{Required}\label{subsec:required}
+The \preconnection{} must allow for the user to specify both the local and remote machine the resulting \connection{}
+will operate with.
+Without this functionality, a \connection{} would not be able to be established as there would be nothing to establish
+between.
 
 The API must provide enough functionality to support a single-client and single-server example.
 This is required, because this is a minimum requirement to be able to be a basic replacement for BSD sockets.
@@ -19,10 +25,11 @@ As such a \preconnection{} must be defined which can initiate a \connection{} ob
 \connection{}s.
 
 The API must be asynchronous, utilising futures as the mechanism of handling asynchronous events.
-This is required, because one the main issues with BSD sockets discussed in chapter 1 was its synchronous nature.
+This is required, because one the main issues with BSD sockets discussed in Chapter~\ref{ch:background} was its
+synchronous nature.
 Asynchronous network programming is the modern technique, as such must be the primary method of using a new networking
 API .
-Futures are the de facto standard method for asynchronous programming in Rust, as such they shall be used.
+Futures are the de-facto standard method for asynchronous programming in Rust, as such they shall be used.
 
 The API must define a \connection{} object which can send and receive typed data.
 As discussed in Chapter~\ref{ch:background}, one of the issues with BSD sockets is they only support sending byte
@@ -34,15 +41,15 @@ The API must define a mechanism to frame messages of a known size.
 This is required, because in order to transform underlying transport layer data to and from useful message data,
 it must be framed.
 Without a framing mechanism, a byte-stream based transport layer will not be able to send and received typed data,
-which is required by the previous requirement, and has been discussed as an issue with BSD sockets in chapter 1.
+which is required by the previous requirement.
 
 \subsection{Optional}\label{subsec:optional}
 
 The API could provide a mechanism to frame messages of an unknown size.
 This would allow byte-stream based transport layer data to be transformed to and from useful message data, even without
 knowing the size of the data being transferred.
-Since this section of the TAPS specification is currently not well-defined and is under continuous modification,
-this will not be required to be implemented by this project.
+Since this section of the TAPS specification is not well-defined and is under continuous modification, this will not be
+required to be implemented by this project.
 
 The API could provide a \connection{} object which can receive partial data.
 Since the underlying transport layer could not provide reliable data transfer, the \connection{} object could provide
