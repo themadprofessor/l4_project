@@ -1,69 +1,10 @@
 In this chapter, we research a suitable implementation language and existing attempts to replace the BSD Sockets API .
-
-\section{Rust}\label{sec:rust}
-Rust is a modern systems programming language, which aids developers “write faster, more reliable software”, according
-to the Rust book (\cite{kalbnik_rustprogramminglanguage_}).
-Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
-
-One major issue with writing system software is ownership.
-Who owns a resource, such as memory or file handles, and for how long.
-In higher level languages, a garbage collector will ensure no resources live longer than they are needed, often through
-the use of reference counting.
-Garbage collection does elevate the burden of resource management from the developer, but in return, the developer has
-much less control over resources, and the resources will live of a non-deterministic length of time with most garbage
-collectors.
-Languages like C and C++ require the programmer to manage resources, releasing them manually, leading to unreleased
-resources if implemented incorrectly.
-Rust enforces correct resource management by delegating all resource management to the compiler, through its borrow
-checker.
-Only a single entity can own a resource in Rust.
-All other entities must use references to interact with the resource.
-Furthermore, either a single mutable reference or an arbitrary number of immutable references can exist for a resource
-at once.
-These references cannot live longer than the entity owning the resource, which is enforced by the compiler.
-When a reference goes out of scope, it is freed.
-When an entity goes out of scope, there must be no remaining references to the entity, and the resources the entity owns
-are freed.
-Through this method, invalid references cannot exist, and it is impossible to release a resource which has already been
-released.
-A side effect of only allowing a single mutable reference, or an arbitrary number of immutable references, the compiler
-can guarantee a compiled program is data race free.
-This is because, only a single entity can modify a resource, while knowing no other entities can read the resource or
-modify the resource.
-
-Being a modern language, Rust provides some higher level concepts and construct to systems programming.
-While Rust is a statically typed language, it provides local type inference, allowing for cleaning code.
-Its type-system is inspired by other languages such as Haskell, as such a programmer can express a large amount of
-information through the types they use alone.
-Furthermore, Rust has support for higher-order functions, because functions are a first-class type.
-Functions, such as map and fold, are provided, not directly for collections of items, rather iterators.
-Iterators in Rust provide a functional method for working with collections of items, while providing performance similar
-to a comparable loop construct.
-
-Rust also emphasises its ability to provide “zero-cost abstractions”.
-This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level
-constructs, allowing for code to be written faster and cleaner, without any performance impact.
-Another example is Rust's Option type, which is either Some wrapping an object, or None.
-This can be the equivalent to a \texttt{NULL}-pointer check in C, due to Rust's null-pointer optimisation, but is much
-safer as the type-system forces the programmer to check for the presence of an object.
-A Future in Rust is a type which is polled until it is complete.
-A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
-Rather than polling all the Futures manually, a runtime is used to manage the Futures.
-The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is
-polled.
-
-Recently, Rust introduced support for \texttt{async/await} syntax~\citep{withoutboats_asyncawaitnotation_}.
-A function can be marked as \texttt{async}, which changes the return type to be a \texttt{Future} wrapping the original
-return type.
-When an \texttt{async} function reaches an \texttt{await}, the poll being used to progress the Future returns Pending,
-informing the runtime this \texttt{Future} is incomplete and another \texttt{Future} should be polled.
-The \texttt{Future} will continue to return \texttt{Pending} until the \texttt{Future} being awaited completes,
-at which point the function will continue until the next \texttt{await} or the function returns.
-The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared too
-manually handling \texttt{Future}s.
+First, we discuss the BSD Sockets API and it's limitations.
+Then, we discuss three previous attempts to replace BSD Sockets: Post Sockets, NEAT and TAPS.
+Next, we discuss a modern, systems program language which will be used to implement the BSD Sockets replacement.
 
 \section{BSD Sockets}\label{sec:bsd-sockets}
-The Berkeley socket API (BSD Sockets) allows an application to communicate over the Internet since 1983.
+The Berkeley Socket API (BSD Sockets) allows an application to communicate over the Internet since 1983.
 A key reason for its longevity is how a network socket is treated in the same way as a local file, once the socket has
 been created.
 This allows a programmer with understanding of local file I/O to work with network sockets.
@@ -91,6 +32,21 @@ While there is a non-blocking mode for BSD Sockets, it is error-prone and cumber
 Furthermore, modern network programming utilises callbacks or futures, which BSD Sockets has no support for.
 A custom event loop needs to be created and each socket needs to be polled by the application, rather than the API's
 implementation.
+
+BSD Sockets was designed for the Unix operating system, which was implemented in the C programming language, therefore
+was implemented in C and exposed a C API.
+At the time, C was the correct choice for language as it allowed for easy porting to other platforms, and high
+performance.
+C has many weaknesses, such as limited concurrency support, widespread undefined behaviour and a weak type system.
+These weaknesses can be seen in the design of BSD Sockets: single-threaded synchronous, integer-based API .
+Using C can lead to a number of bugs which cannot be checked by the compiler.
+For example, a listening socket and a connected socket both have the same type (int), which can lead to misusing a
+listening socket in a \texttt{recv()} call, where the connected socket, the listener has produced from an
+\texttt{accept()} call, should have been used.
+This can lead to a program which blocks indefinitely as a listening socket will never receive data which would unblock
+a \texttt{recv()} call.
+If the listening socket and the connected socket had different types, the compile could catch such an issue at compile
+time.
 
 \section{Post Sockets}\label{sec:post-sockets}
 Post Sockets~\citep{kuhlewind_postsocketsabstract_} is an API intended to provide an asynchronous, message-orientated,
@@ -230,6 +186,80 @@ TAPS defines a \framer{} to define message boundaries for protocols which may or
 boundaries.
 A simple \framer{} could prepend each message with the length of the message, or define an end-of-message sequence for
 example.
+
+\section{Rust}\label{sec:rust}
+Rust is a modern systems programming language, which aids developers “write faster, more reliable software”, according
+to the Rust book (\cite{kalbnik_rustprogramminglanguage_}).
+Rust targets systems level programming, similar to C and C++, but provides much greater safety in comparison.
+
+One major issue with writing system software is ownership.
+Who owns a resource, such as memory or file handles, and for how long.
+In higher level languages, a garbage collector will ensure no resources live longer than they are needed, often through
+the use of reference counting.
+Garbage collection does elevate the burden of resource management from the developer, but in return, the developer has
+much less control over resources, and the resources will live of a non-deterministic length of time with most garbage
+collectors.
+Languages like C and C++ require the programmer to manage resources, releasing them manually, leading to unreleased
+resources if implemented incorrectly.
+Rust enforces correct resource management by delegating all resource management to the compiler, through its borrow
+checker.
+Only a single entity can own a resource in Rust.
+All other entities must use references to interact with the resource.
+Furthermore, either a single mutable reference or an arbitrary number of immutable references can exist for a resource
+at once.
+These references cannot live longer than the entity owning the resource, which is enforced by the compiler.
+When a reference goes out of scope, it is freed.
+When an entity goes out of scope, there must be no remaining references to the entity, and the resources the entity owns
+are freed.
+Through this method, invalid references cannot exist, and it is impossible to release a resource which has already been
+released.
+A side effect of only allowing a single mutable reference, or an arbitrary number of immutable references, the compiler
+can guarantee a compiled program is data race free.
+This is because, only a single entity can modify a resource, while knowing no other entities can read the resource or
+modify the resource.
+
+Being a modern language, Rust provides some higher level concepts and construct to systems programming.
+While Rust is a statically typed language, it provides local type inference, allowing for cleaning code.
+Its type-system is inspired by other languages such as Haskell, as such a programmer can express a large amount of
+information through the types they use alone.
+Furthermore, Rust has support for higher-order functions, because functions are a first-class type.
+Functions, such as map and fold, are provided, not directly for collections of items, rather iterators.
+Iterators in Rust provide a functional method for working with collections of items, while providing performance similar
+to a comparable loop construct.
+
+Rust also emphasises its ability to provide “zero-cost abstractions”.
+This means using high level constructs, such as iterators, do not inure any performance cost over using lower-level
+constructs, allowing for code to be written faster and cleaner, without any performance impact.
+Another example is Rust's Option type, which is either Some wrapping an object, or None.
+This can be the equivalent to a \texttt{NULL}-pointer check in C, due to Rust's null-pointer optimisation, but is much
+safer as the type-system forces the programmer to check for the presence of an object.
+A Future in Rust is a type which is polled until it is complete.
+A key feature of Rust's Futures is they only carry out work when polled, so there is no extra cost to use a Future.
+Rather than polling all the Futures manually, a runtime is used to manage the Futures.
+The runtime is responsible for distributing the Futures among its worker poll if applicable, and ensuring each Future is
+polled.
+
+Recently, Rust introduced support for \texttt{async/await} syntax~\citep{withoutboats_asyncawaitnotation_}.
+A function can be marked as \texttt{async}, which changes the return type to be a \texttt{Future} wrapping the original
+return type.
+When an \texttt{async} function reaches an \texttt{await}, the poll being used to progress the Future returns Pending,
+informing the runtime this \texttt{Future} is incomplete and another \texttt{Future} should be polled.
+The \texttt{Future} will continue to return \texttt{Pending} until the \texttt{Future} being awaited completes,
+at which point the function will continue until the next \texttt{await} or the function returns.
+The new syntax allows for asynchronous code to be written quickly and cleanly with no runtime cost, compared too
+manually handling \texttt{Future}s.
+
+\section{Summary}\label{sec:summary}
+BSD Sockets has become less applicable as a networking API since its creation, with the main issues being: being a
+predominantly synchronous API, being an integer-based API, forcing the user to tightly couple their program to
+transport protocols and limiting the uptake of new transport protocols.
+A solution is to create a new API which builds upon the key ideas of the existing attempts to replace BSD Sockets,
+resulting in a high-level, strongly typed, asynchronous API .
+This new API will make use of a modern systems programming language (Rust) to add more compile-time safety, while having
+minimal impact on performance.
+Furthermore, the new API will enforce weak-coupling between the program and the transport protocols by not allowing the
+user to specify specific transport protocols, rather specify preferences on a set of properties which a transport
+protocol must uphold.
 
 %What did other people do, and how is it relevant to what you want to do?
 %\section{Guidance}
