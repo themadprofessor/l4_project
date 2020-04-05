@@ -5,8 +5,7 @@ One of the first run-times was Tokio~\citep{tokiocommunity_tokioasynchronousrunt
 asynchronous runtime for Rust.
 Tokio existed prior to \asyncawait{} syntax as a runtime for futures directly.
 At the beginning of the project, Rust was still stabilising its \asyncawait{} syntax~\citep{withoutboats_asyncawaitnotation_},
-so there was no
-complete and stable implementations of the asynchronous runtime.
+so there were no complete and stable implementations of the asynchronous runtime.
 The closest was Tokio's unstable implementation, which was stabilised soon after Rust stabilising
 \asyncawait{}.
 Now there exists multiple asynchronous run-times with the three main ones being Tokio, async-std and actix-rt.
@@ -65,7 +64,7 @@ where
 
 As shown in Listing~\ref{fig:racer}, the connection racing makes use of the \Endpoint{} trait to resolve the
 endpoint before attempting to connect to each \texttt{SocketAddr}.
-Each connection attempt future is executed using Tokio's task mechanism.
+Each connection attempt \texttt{Future} is executed using Tokio's task mechanism.
 This is Tokio's asynchronous green threads implementation, which allows for each connection attempt to be conducted
 simultaneously.
 If Tokio's threaded runtime is enabled, the tasks are split across multiple threads, allowing for more concurrency over
@@ -87,24 +86,24 @@ The \texttt{map(|x| x.0)} drops the list of still executing \texttt{Future}s sin
 Each connection attempt needs read-only access to the \texttt{TransportProperties} given to the \texttt{race()}
 function.
 In synchronous code, each connection attempt would be given an immutable reference to the \texttt{TransportProperties}.
-Since there is no guarentee as to when a \texttt{Future} will complete, this cannot be done as the compiler cannot
+Since there is no guarantee as to when a \texttt{Future} will complete, this cannot be done as the compiler cannot
 ensure the reference will live long enough.
 Therefore, the \texttt{TransportProperties} is wrapped in an \texttt{Arc}\footnote{Atomic Reference Count}, which moves
-the \texttt{TransportProperties} on to the heap, and does not deallocate it until all “clones” of it are released.
+the \texttt{TransportProperties} onto the heap, and does not deallocate it until all “clones” of it are released.
 \texttt{Arc}'s implementation of \texttt{clone()} creates a new stack-allocated reference to the heap-allocated object,
 and increments the reference count atomically.
 When one of these "clones" goes out of scope, it's \texttt{Drop} implementation ensures the reference count is
 decremented atomically.
-If the reference count becomes \(0\) by one of these the allocations, the heap allocation is also deallocated.
+If the reference count becomes \(0\) by one of these the deallocations, the heap allocation is also deallocated.
 Using an \texttt{Arc} means the job of ensuring the \texttt{TransportProperties} is deallocated at the correct time is
 no longer handled by the compiler, rather the runtime reference count mechanism.
 Rust provides both an \texttt{Arc} and \texttt{Rc} which are both reference counting smart pointers, but differ in the
 type of the reference count.
-\texttt{Rc} uses a traditional integer, where as \texttt{Arc} uses an atomic interger, allowing for it to be modified
+\texttt{Rc} uses a traditional integer, whereas \texttt{Arc} uses an atomic integer, allowing for it to be modified
 by multiple threads safely.
 Since a \texttt{Future} can be executed on a different thread than the one which created it, an \texttt{Arc} must be
 used as there could be any number of connection attempts happening on any number of threads.
-Furthermore, Tokio's \texttt{task::spawn()} requires the \texttt{Future} it's given to have a defintion with a
+Furthermore, Tokio's \texttt{task::spawn()} requires that the \texttt{Future} it's given to have a definition with a
 \texttt{'static} lifetime.
 The definition of a \texttt{Future} created from a function which takes a reference as a parameter has a lifetime the
 same as the reference.
@@ -149,7 +148,7 @@ respectively.
 If the \preconnection{} is given the remaining unspecified endpoint, the state machine transitions to the
 “Both Endpoints” state.
 The \texttt{initiate()} method is only implemented if \texttt{R} implements the \Endpoint{} trait, which
-\texttt{NoEndpoint} doesn't, therefore if the compiler allows a call to the \texttt{initiate()} method, a remote
+\texttt{NoEndpoint} does not, therefore if the compiler allows a call to the \texttt{initiate()} method, a remote
 endpoint must have be specified and the state machine is in either the “Remote Endpoint Only” or “Both Endpoints”
 states.
 Similarly, the \texttt{listen()} method is only implemented if \texttt{L} implements the \Endpoint{} trait, therefore
@@ -171,7 +170,7 @@ to the calling \connection{} more data is needed from the network.
 As shown in Figure~\ref{fig:recv}, once the user calls \texttt{recv()} and the \connection{} receives data, the data is
 passed to the \framer{} to be deframed.
 The \framer{} can then either signal to the \connection{} more data is required, or pass the remaining data to the
-\decode{} implementation, depending if enough data had be received to deframe the message.
+\decode{} implementation, depending if enough data has been be received to deframe the message.
 The \decode{} implementation can then either decode the message and return the decoded message back to the \connection{},
 or signal to the \framer{} more data is required, which in turn signals to the \connection{} more data is required.
 This leads to two possible cycles while processing a message: \texttt{3->4->3} or \texttt{3->5->6->4->3}.

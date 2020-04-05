@@ -225,3 +225,6 @@
 
 ### 01 Apr 2020
 * *6 hours* Redo eval code timings and analyse the data
+
+### 02 Apr 2020
+* *4 hours* Add background on TAPS

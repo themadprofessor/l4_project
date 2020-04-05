@@ -97,8 +97,8 @@
 
 The way programs have interacted with networks has not changed since the 1980s with the creation of the Berkeley Sockets
 API (BSD Sockets).
-Since then, what programs use networks for, and the amount programs use networks has changed drastically, but they all
-continue to use the same BSD Sockets API .
+Since then, programs have seen a drastic increase in relience and range of usage of networks, but they all continue to
+use the same BSD Sockets API .
 BSD Sockets have become less applicable as the standard API over the years, but no API has been able to replace it.
 
 BSD Sockets was designed to be a simple API which followed the same structure as local file access APIs.
@@ -110,7 +110,7 @@ Networking is inherently asynchronous and unreliable in its operation, and opera
 While BSD Sockets has been extended over the years to support asynchronous operations with its non-blocking mode, it is
 extremely error prone and cumbersome to use.
 BSD Sockets does expose a mechanism to customise the protocol stack, but it requires the user of the API to select which
-protocols and has a limited selection of protocols, which are specified by the operating system.
+protocols to use from a limited range, supported by the operating system.
 
 The aim of this project is to design and implement a new networking API which overcomes the limitations of the BSD
 Sockets API .
@@ -127,8 +127,8 @@ TAPS is an API which aims to provide a unified API for connections which communi
 (See Section~\ref{sec:taps}).
 
 The structure of this document is as follows.
-First, a discussion of Post Sockets, NEAT and TAPS as the major infulences of this work, and the Rust programming
-language, in Chapter~\ref{ch:background}.
+First, a discussion of Post Sockets, NEAT and TAPS as the major influences of this work, and the Rust programming
+language is dicussed in Chapter~\ref{ch:background}.
 Then in Chapter~\ref{ch:analysis/requirements}, the requirements for the projects are outlined and discussed.
 Chapter~\ref{ch:design} then discusses the high-level design of the API the project will create.
 Following on from that is a discussion of the implementation of the API in Chapter~\ref{ch:implementation}.
@@ -224,7 +224,7 @@ Finally, Chapter~\ref{ch:conclusion} discusses possible future work on the proje
 %==================================================================================================================================
 \chapter{Conclusion}\label{ch:conclusion}
 The aim of this project was to define a modern alternative to the BSD Sockets API .
-BSD Sockets was defined in the 1980s, and has continued to be the standard networking API, dispite it not being fit for
+BSD Sockets was defined in the 1980s, and has continued to be the standard networking API, despite it not being fit for
 modern networked programs.
 %Summarise the whole project for a lazy reader who didn't read the rest (e.g. a prize-awarding committee).
 %\section{Guidance}

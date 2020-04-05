@@ -41,11 +41,11 @@ See Section~\ref{subsec:framer} for details on why a \framer{} is required for a
 \section{Abstract API}\label{sec:abstract-api}
 The API will be expressed primarily through abstract types with multiple possible concrete implementations.
 Users of the API will operate almost exclusively with the traits (abstract types) in order to allow the underlying
-implementation and protocol stack to change with minimal changes to the user's code.
+implementation and protocol stack to change with minimal impact to the user's code.
 If the API was defined with concrete types through the use of structs, the underlying implementation which handles
-the native network would not be able to change without major changes to the user's code.
-Due to Rust's heavy use of monomorphisation and lack of runtime generics, for the API to be able to be dynamically
-linked into user applications and distributed separately, the traits will be used through trait objects.
+the native network would not be able to impact without major changes to the user's code.
+Due to Rust's heavy use of monomorphisation and lack of runtime generics, the traits will be used through trait objects
+to allow the API to be dynamically linked.
 Trait objects are Rust's method of dynamic dispatch and pseudo runtime generics.
 All trait objects must be wrapped in \texttt{Box} and marked as \texttt{dyn}, for example
 \texttt{Box<dyn Connection<F>>}, which leads to cluttered code.
@@ -94,8 +94,8 @@ While the user should not focus on the underlying implementation of the traits, 
 \preconnection{} to know how to instantiate them.
 The \emph{Implementation} trait is a primarily an internal trait as it specifies the underlying implementation, but is
 public to allow the end user to select from multiple implementations, and create custom implementations.
-The specific implementation will be given \preconnection{}'s \texttt{I} generic parameter, which implements the
-\emph{Implmentation} trait.
+The specific implementation will be specified with \preconnection{}'s \texttt{I} generic parameter, which implements the
+\emph{Implementation} trait.
 
 \begin{lstlisting}[float=h, label=lst:impl, caption={The Implementation trait.}]
 pub trait Implementation {
@@ -124,7 +124,8 @@ pub trait Implementation {
 \end{lstlisting}
 
 One method to utilise the \emph{Implementation} is to have the methods take either \texttt{\&mut self} or
-\texttt{\&self}, and pass the implementation as a parameter when constructing a \preconnection{}.
+\texttt{\&self}, which are a mutable reference to the object and an immutable reference to the object respectively
+(similar to \texttt{this} in C++), and pass the implementation as a parameter when constructing a \preconnection{}.
 This would require the end user to always specify an implementation when constructing a \preconnection{}, even when
 using the default implementation.
 See Listing~\ref{lst:preconnBad} for an example of this method.
@@ -137,9 +138,8 @@ fn example() {
 }
 \end{lstlisting}
 
-An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form, and using it as a
-marker.
-This would allow the \preconnection{} can specify a default implementation using Rust's default generic parameter
+An alternative method is to have the \emph{Implementation} methods not take \texttt{self} in any form.
+This would allow the \preconnection{} to specify a default implementation using Rust's default generic parameter
 mechanism.
 See Listing~\ref{lst:preconnGood} for two examples of this method, the first \preconnection{} is an example of using
 the default implementation, and the second \preconnection{} shows how a custom implementation would be specified.
@@ -155,9 +155,9 @@ fn example() {
 \end{lstlisting}
 
 \subsection{Endpoint}\label{subsec:endpoint}
-A \connection{} and \listener{} need to know what to connect to or listen to respectively, and this is specfied in the
+A \connection{} and \listener{} need to know what to connect to or listen to respectively, and this is specified in the
 creating \preconnection{} by giving it either local or remote \Endpoint{}s.
-An \Endpoint{} is a type which represents a possible either a local or remote endpoint.
+An \Endpoint{} is a type which represents possibilities, either a local or remote endpoint.
 This could be a string containing a domain name, or an IPv6 address and port number for example.
 It does not represent an endpoint, rather a possible endpoint which needs to be resolved into a \texttt{SocketAddr}.
 
@@ -179,13 +179,13 @@ A trivial implementation could be provided for the \texttt{SocketAddr}, but impl
 Rust's \texttt{ToSocketAddrs} trait, which have implementations for \texttt{SocketAddr}, cannot be used as a blanket
 implementation for \Endpoint{}.
 All implementations of \Endpoint{} must also be \texttt{Send} since \texttt{resolve} is async, which means it will
-make use of a \texttt{Future}, which could be ran on a different thread.
-The associated types \texttt{Error} and \texttt{Iter} require the type to be \texttt{Send} for the same reason.
+make use of a \texttt{Future}, which could be run on a different thread.
+The associated types \texttt{Error} and \texttt{Iter} require the type to be of type \texttt{Send} for the same reason.
 Furthermore, since there is no guarantee as to how long the \texttt{Future} will take to complete, the type which
 implements \Endpoint{} must exist for the length of the program, hence must have a \texttt{'static} lifetime.
 Upon a successful resolution, the resolved \texttt{SocketAddr}s are returned as an \texttt{Iterator}.
-Initially \texttt{resolve} returned a \texttt{Vec<SocketAddr>}, primarily because it allowed for simpler type defintions
-and didn't require an associated type.
+Initially \texttt{resolve} returned a \texttt{Vec<SocketAddr>}, primarily because it allowed for simpler type
+definitions and didn't require an associated type.
 Using a \texttt{Vec} requires explicit allocation, which would lead to an unnecessary performance hit when an
 implementation operates on an \texttt{Iterator} internally or is a trivial implementation such as for
 \texttt{SocketAddr}.
@@ -195,20 +195,20 @@ This can lead to a long type definition for \texttt{Iter}, but this can be media
 \texttt{type\_alias\_impl\_trait}\footnote{\url{https://github.com/rust-lang/rust/issues/63063}}.
 
 \subsection{Connection}\label{subsec:connection}
-Once the \preconnection{} is fully configured, it's \texttt{initate()} method can be called to initate connection
-establish ment to the \preconnection{}s remote \Endpoint{}.
+Once the \preconnection{} is fully configured, it's \texttt{initiate()} method can be called to initiate connection
+establishment to the \preconnection{}s remote \Endpoint{}.
 A \connection{} object represents a messaged-orientated connection between a local and remote endpoint.
 It wraps an underlying protocol stack the user of the API specifies with the \emph{Implementation}
-parameter of the \preconnection{} which crated the \connection{}.
+parameter of the \preconnection{} which created the \connection{}.
 The user shouldn't need to focus on the underlying protocol stack as the \texttt{initiate()} method and
 \listener{} will ensure the required properties for the \connection{} are upheld.
 A \connection{} cannot be created without a remote endpoint.
-Without a remote endpoint, a \connection{} has nothing to connect too.
-The remote endpoint can either be given to the creating \preconnection{} for use in the \texttt{initate()} method,
-or from the incoming \emph{connection} a \listener{} receives.
+Without a remote endpoint, a \connection{} has nothing to connect to.
+The remote endpoint can either be given to the creating \preconnection{} for use in the \texttt{initiate()} method,
+or taken from the incoming \emph{connection} a \listener{} receives.
 If the creating \preconnection{} is given a local endpoint, the \texttt{initaite()} method will ensure the resulting
 \connection{} is between the required remote endpoint and given local endpoint.
-By default, the \texttt{initate()} method will attempt to establish a \emph{connection} between the required remote
+By default, the \texttt{initiate()} method will attempt to establish a \emph{connection} between the required remote
 endpoint and any applicable local endpoint.
 
 \begin{lstlisting}[float=h, label=lst:connection, caption={The Connection trait.}]
@@ -234,25 +234,26 @@ The \connection{} will be defined as a trait, and will be constructed with the \
 initiate method.
 Each implementation of the \emph{Implementation} trait will have its own underlying representation of a connection
 between a local and remote endpoint.
-Defining a \connection{} as trait allows the user's code to use any underlying representation of a connection
+Defining a \connection{} as a trait allows the user's code to use any underlying representation of a connection
 without having to specifically handle each possible representation.
-As shown in Listing~\ref{lst:connection}, the close and abort methods take \texttt{Box<Self>} rather than \texttt{Self}.
+As shown in Listing~\ref{lst:connection}, the \texttt{close()} and \texttt{abort()} methods take \texttt{Box<Self>}
+rather than \texttt{Self}.
 Since \connection{} is to be a trait object, it must be object safe.
 An object safe trait, must not require implementations to be sized, not have any methods which consume \texttt{Self}, no
 associated constants and all supertraits must be object safe.
 As such, for the close and abort methods cannot take \texttt{Self}, instead take \texttt{Box<Self>} since it is sized
 and does not require \texttt{Self} to be sized.
 These methods consume \texttt{Box<Self>} because the Rust compiler can ensure no other variable has ownership of the
-\connection{} when it is closed or aborted, preventing the \connection{} to be used after its closed or aborted.
+\connection{} when it is closed or aborted, preventing the \connection{} from be used after its closed or aborted.
 
-Both \texttt{close} and \texttt{abort} methods are provided because a \texttt{close} will gracefully close the
+Both \texttt{close()} and \texttt{abort()} methods are provided because a \texttt{close()} will gracefully close the
 underlying connection.
-For connection-oriented transport protocols, \texttt{close} should inform the remote endpoint the connection
+For connection-oriented transport protocols, \texttt{close()} should inform the remote endpoint the connection
 is closed, allowing for resource cleanup.
-Connection-less transport protocols may inform the remote endpoint if applicable.
-Other the other hand, \texttt{abort} should cleanup the local resources, but makes no guarantee about if the remote
-endpoint is informed of the connection closing.
-If a \connection{} has a \texttt{Drop} implementation, it should have similar semantics to \texttt{close}, but
+Connectionless transport protocols may inform the remote endpoint if applicable.
+On other the other hand, \texttt{abort()} should clean up the local resources, but it makes no guarantee about whether
+or not the remote endpoint is informed of the connection closing.
+If a \connection{} has a \texttt{Drop} implementation, it should have similar semantics to \texttt{close()}, but
 discard errors produced.
 
 \subsection{Listener}\label{subsec:listener}
@@ -262,7 +263,7 @@ A \listener{} represents a stream of incoming \connection{}s for a local endpoin
 It is bound to the local endpoint in the creating \preconnection{}, and listens for incoming \connection{}s,
 represented as an asynchronous stream of \emph{Connections}.
 A \listener{} cannot be created without a local endpoint.
-Without a local endpoint, the \listener{} cannot be bound and cannot listen ofr incoming \connection{}s.
+Without a local endpoint, the \listener{} cannot be bound and cannot listen for incoming \connection{}s.
 The local endpoint must be given to the creating \preconnection{} for use in the \texttt{listen()} method.
 A remote endpoint is optional, and if it is given to the creating \preconnection{}, the resulting \listener{} will only
 accept \connection{}s from the given remote endpoint.
@@ -280,7 +281,7 @@ where
 \end{lstlisting}
 One approach to design this trait is to define the trait with a method which returns a \texttt{Future} that resolves
 into a Connection when one is received.
-An issue with this design is it does not represent a \listener{} as what it is.
+An issue with this design is it does not a true reflection of the \listener{} interface.
 Conceptually a \listener{} is an asynchronous stream of \connection{}s, and this design represents a
 \listener{} as an object which is idle until the user requests a \connection{}.
 At this point it then begins to listen for incoming connections, which could lead to lost connections.
@@ -289,12 +290,10 @@ from the futures crate.
 This allows a \listener{} to make use of the existing \texttt{Stream} ecosystem, such as the \texttt{StreamExt}
 trait, which provides an \texttt{Iterator}-style interface to a \texttt{Stream}.
 As shown in Listing~\ref{lst:listener}, the implementation for the \texttt{Stream} trait is required to produce an Item
-which either a \connection{} or an \emph{Error}.
+which is either a \connection{} or an \emph{Error}.
 For a \framer{} to be given to a \listener{}, a new version of it needs to be given to each \connection{}
 received.
 As such, \framer{}'s which can be used with the \listener{} trait must implement \texttt{Clone}.
-Since \texttt{Clone}'s \texttt{clone} method allows arbitrary code, \framer{}s which contain information which
-shouldn't be duplicated rather reconstructed, the implementation can do that as required.
 
 The \connection{} and \listener{} traits and the \preconnection{} struct will be generic over the framer
 used to frame the data which the connections will be operating on.
@@ -350,14 +349,15 @@ The \framer{} must be generic over the data types it will frame and deframe.
 By having a \framer{} be generic over both the data it can frame and deframe, different types can be used for input
 and output, removing the chance of the end user using the incorrect data.
 The Input and Output types are defined as associated types.
-This allowed the implementation specify the accepted types, rather than the end user, which allows an implementation to
+This allowed the implementation to specify the accepted types, rather than the end user, which allows an implementation to
 restrict what data it can send and receive.
-An alternative approach is to defined Input an Output as generic types on the frame and deframe methods respectively.
-This would allow the end user to pass an arbitrary type which implements a trait, which could be specified the by
-the implementation.
+An alternative approach is to defined Input an Output as generic types on the \texttt{frame()} and \texttt{deframe()}
+methods respectively.
+This would allow the end user to pass an arbitrary type which implements a trait, which could be specified by the
+implementation.
 Such an approach would make it very difficult to work with header information.
 For example, a HTTP framer would not be able to return the status code to the end user.
-Associated type mean the implementation can limit the types the end user can use to type which handle such header data.
+Associated types mean the implementation can limit the types the end user can use to type which handle such header data.
 These types can contain their own generic parameters, for example a HTTPResponse object could have a generic type for
 the body of the response, which can be restricted to types which implement \decode{}.
 Listing~\ref{lst:framer} shows the Input and Output types as associated types.
@@ -369,32 +369,33 @@ a static lifetime.
 different threads.
 While a \texttt{Future} does not specify it will be executed on a different thread than it was created, but it allows
 it so a \framer{} must be able to be passed to another thread.
-Since \framer{}'s methods use \texttt{\&mut self}, a \framer{} maybe accessed by a thread other than the thread
-which created, so a \framer{} must be able to be accessed from different threads.
-Rust allows types to be defined within a function, which restricts the lifetime of these type definitions to the
-lifetime of the function.
-\texttt{Future}s require all types which are used within the \texttt{Future} must live longer than the \texttt{Future}.
-Rust allows type to be defined within functions, so the type definition would live until the function returned.
+Since \framer{}'s methods use \texttt{\&mut self}, a \framer{} may be accessed by a thread other than the thread
+which created it, so a \framer{} must be able to be accessed from different threads.
+\texttt{Future}s require that all types which are used within the \texttt{Future} must live longer than the
+\texttt{Future}.
+Rust allows type to be defined within functions, so the type definition would live for the duration of the function,
+meaning the type cannot be referenced outside the function.
 Since a \texttt{Future} can take an indeterminate length of time to complete, all \framer{} type definitions must
 have a static lifetime, which means it lives for the lifetime of the program.
 
 An example is a HTTP framer, which can frame a HttpRequest object and deframe a HttpResponse object.
 Using different types for framing and deframing means the end user cannot accidentally send the data they have received
 back to the sender.
-A HttpRequest object and HttpResponse object would contain a type which implements the \encode{} and \decode{}
+A HttpRequest object and HttpResponse object must contain a type which implements the \encode{} and \decode{}
 trait respectively.
 
 \subsection{Encode and Decode}\label{subsec:encode-and-decode}
-During a \connection{}'s \texttt{send()} method, the \connection{}'s \framer{} frames the message \texttt{send()} is
-given, and the \framer{} calls the message's \texttt{encode()} method to convert the message into raw bytes to be given
+During a \connection{}'s \texttt{send()} method, the \connection{}'s \framer{} frames the message parameter the
+\texttt{send()} received, and the \framer{} calls the message's \texttt{encode()} method to convert the message into raw
+bytes to be given
 to the underlying transport protocol.
 Similarly, the \connection{}'s \framer{} is called during the \connection{}'s \texttt{recv()} method once data is
 received, which first deframes the message before calling the message's \decode{} method to attempt to convert the
 raw bytes into a message.
-The \connection{} sends and recieves typed messages, but the underlying protocol stack operates on raw bytes,
+The \connection{} sends and receives typed messages, but the underlying protocol stack operates on raw bytes,
 therefore messages must be able to be converted to and from raw bytes.
 \encode{} defines a type which can be encoded into bytes for transport.
-\decode{} defines a type which can be decoded from bytes, and support incomplete data when decoding.
+\decode{} defines a type which can be decoded from bytes, and supports incomplete data when decoding.
 
 \begin{lstlisting}[float=h, label=lst:encode, caption={The Encode trait, showing the size\_hint method.}]
 pub trait Encode {
@@ -421,14 +422,14 @@ to allow for memory to be preallocated if required.
 A default implementation of this method is provided since this is used solely for optimisation.
 Both \encode{} and \decode{} will have an associated error type, which must implement both \texttt{Send} and
 \texttt{Error}.
-This error type will be use for the \texttt{Err} variant of the returned results from the decode or encode methods.
+This error type will be used for the \texttt{Err} variant of the returned results from the decode or encode methods.
 Requiring the type to implement the \texttt{Error} trait ensures the type is a valid error, and the \texttt{Send} trait
 ensures the type can be sent between threads, which may occur with \texttt{Future}s.
 Allowing an implementation of the \encode{} or \decode{} traits to return their own error type makes
 implementing the trait simpler as the implementation does not have to convert their error types into a TAPS error.
 There exists the \emph{Serialize} and \emph{Deserialize} traits from the Serde trait, which appear to be similar to
 \encode{} and \decode{}.
-The aim of Serde's traits it to map between an Rust's data model and Serde's data model.
+The aim of Serde's traits is to map between a Rust's data model and Serde's data model.
 Serde's data model is designed to be used in conjunction with existing data formats, rather than an arbitrary collection
 of bytes.
 Therefore, the \encode{} and \decode{} traits are needed to map between typed, structured data and raw bytes.
@@ -448,11 +449,11 @@ In order to handle incomplete data when receiving data from a \connection{}, the
 \framer{}'s \texttt{deframe} and \decode{}'s \texttt{decode} methods must indicate this.
 As shown in Listings~\ref{lst:decode} and~\ref{lst:framer}, the returned error types are wrapped in \texttt{Error},
 which is defined as shown in Listing~\ref{lst:codecError}.
-This is based of the method used by~\cite{geal_nomerrrust_} for the nom crate.
-If the \framer{} or \decode{} runs out of data while deframing or decoding respectively, it will return a
+This is based on the method used by~\cite{geal_nomerrrust_} for the nom crate.
+If the \framer{} or \decode{} runs out of data while deframing or decoding respectively, it will return an
 \texttt{Error::Incomplete}, to signify to the \connection{} to get more data.
-Both the \texttt{decode} and \texttt{deframe} methods \texttt{Ok} and \texttt{Err} also contain the remaining data which
-has not be used from the input.
+Both the \texttt{decode} and \texttt{deframe} methods return a \texttt{Result} which can either be \texttt{Ok} and
+\texttt{Err}, with both varients also containing the remaining data which has not been used from the input.
 Using \texttt{BytesMut} allows the implementations of \decode{} and \framer{} to advance the start of the
 current buffer internally, and allows the \connection{} implementation to continue to read more data into the same
 buffer.
@@ -494,9 +495,10 @@ This specifies IPv4 and IPv6 addresses should be resolved asynchronously, priori
 If an IPv6 address resolves first, attempt to connect to the address, falling back to an IPv4 address if the connection
 failed.
 If an IPv4 address resolves first, delay the connection attempt until either an IPv6 address resolves and connects
-successfully, or period of time (Resolution Delay Period) has passed.
+successfully, or a period of time (Resolution Delay Period) has passed.
 Furthermore, prioritise addresses resolved from a DNS server with an IPv6 address.
 Once an address successfully connects, close connections still connecting, and do not attempt anymore connections.
+If two connections connect simultaneously, either connection can be used.
 Utilising Happy Eyeballs version 2 the implementation to dynamically select the optimal address to connect to, while
 minimising the number of connections which need to be created to find the optimum.
 
