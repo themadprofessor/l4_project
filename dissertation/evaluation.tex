@@ -77,32 +77,50 @@ See Section~\ref{subsec:api-comparison} for a detailed comparison between the AP
 \section{Comparison to BSD Sockets}\label{sec:comparison-to-bsd-sockets}
 
 \subsection{API Comparison}\label{subsec:api-comparison}
-\lstinputlisting[float=h, label=lst:client, caption={A HTTP Client example which sends a GET request for a Cargo.toml
-file and outputs the name within in.}]{../data/client.rs}
-\lstinputlisting[float=h, label=lst:server, caption={A HTTP Server example which listens for a GET request for
-Cargo.toml and send the file as a response.}]{../data/server.rs}
-
-\begin{lstlisting}[float=h, caption={The compiler error produced if a Preconnection without a remote endpoint is used to
-initiate a Connection.}, label=lst:clientError]
-error[E0599]: no method named `initiate` found for struct `taps::preconnection::Preconnection<taps::http::client::HttpClient<_, _>, taps::preconnection::NoEndpoint, taps::preconnection::NoEndpoint>` in the current scope
-\end{lstlisting}
-
-\begin{lstlisting}[float=h, caption={The compiler error produced if a Preconnection without a local endpoint is used to
-listen for Connections.}, label=lst:serverError]
-error[E0599]: no method named `listen` found for struct `taps::preconnection::Preconnection<taps::http::client::HttpServer<_, _>, taps::preconnection::NoEndpoint, taps::preconnection::NoEndpoint>` in the current scope
-\end{lstlisting}
 
 In terms of complexity of the user's code, the API resulting more succinct code which follows a user's reasoning of how
 a connection works.
 Whereas an implementation using BSD Sockets would result in at least an order of magnitude more code, leading to
 increased code complexity.
 Appendix~\ref{ch:bsd-sockets-connection-code} is \(134\) lines long using BSD Sockets, whereas
-Appendix~\ref{ch:taps-connection-evaluation-code} is 21 lines long with TAPS .
+Appendix~\ref{ch:taps-connection-evaluation-code} is 21 lines long with TAPS for example.
 At a glance, the TAPS version is easier to understand as the optional requirement of a “self-documenting” API has been
 met by ensuring all methods concisely describe what they do, and methods can be chained together fluently to represent
 the flow of the program.
 
-\subsection{Latency Comparison}\label{sec:latency-comparison}
+\begin{lstlisting}[float=h!, caption={The compiler error produced if a Preconnection without a remote endpoint is used to
+initiate a Connection.}, label=lst:clientError]
+error[E0599]: no method named `initiate` found for struct `taps::preconnection::Preconnection<taps::http::client::HttpClient<_, _>, taps::preconnection::NoEndpoint, taps::preconnection::NoEndpoint>` in the current scope
+\end{lstlisting}
+
+\begin{lstlisting}[float=h!, caption={The compiler error produced if a Preconnection without a local endpoint is used to
+listen for Connections.}, label=lst:serverError]
+error[E0599]: no method named `listen` found for struct `taps::preconnection::Preconnection<taps::http::client::HttpServer<_, _>, taps::preconnection::NoEndpoint, taps::preconnection::NoEndpoint>` in the current scope
+\end{lstlisting}
+
+The API is able to ensure the user has specified the correct \Endpoint{} in the \preconnection{} at compile time.
+If the user attempts to call \texttt{initiate()} on a \preconnection{} without a remote \Endpoint{}, the compiler raises
+and error similar to the one shown in Listing~\ref{lst:clientError}.
+Similarly, if the user attempts to call \texttt{listen()} on a \preconnection{} without a local \Endpoint{}, the
+compiler raises an error similar to the one shown in Listing~\ref{lst:serverError}.
+Furthermore, it is impossible to incorrectly use a \listener{} in a function which expects a \connection{}, and this is
+enforce by the compiler since they are different types, unlike in BSD Sockets.
+
+\lstinputlisting[float=h, label=lst:client, caption={A HTTP Client example which sends a GET request for a Cargo.toml
+file and outputs the name within in.}]{../data/client.rs}
+\lstinputlisting[float=h, label=lst:server, caption={A HTTP Server example which listens for a GET request for
+Cargo.toml and send the file as a response.}]{../data/server.rs}
+
+As shown in both Listing~\ref{lst:client} and Listing~\ref{lst:server}, the user does not specify the transport protocol
+as they would in BSD Sockets.
+Rather, they provide a set of \texttt{TransportProperties} to the \preconnection{}, which the resulting \connection{}
+will uphold.
+The listings show programs which have no requirements on the properties of the resulting \connection{}, therefore
+use the default \texttt{TransportProperties}.
+This allows the transport layer to change without any change to the user's code, with the possibility of two executions
+of the same program using different transport layers if transport protocol races is implemented.
+
+\subsection{Latency Comparison}\label{subsec:latency-comparison}
 Performance is important for network programming, and as discussed in Chapter~\ref{ch:analysis/requirements} the new
 API should have performance similar to BSD Sockets (Sockets).
 A major difference between the two API is how they open connections.
@@ -131,10 +149,10 @@ to Sockets.
 This is likely due to TAPS being an asynchronous API.
 For the \texttt{Future}'s to be executed, an asynchronous runtime must be created to repeatedly poll each
 \texttt{Future}.
-Sockets does not have this overhead since it is a synchronous API.
+Sockets does not have this overhead since it is a synchronous API .
 To reduce the impact of this overhead, the programs were modified to open \(10\) connections each time they were run.
 
-\begin{figure}[h]
+\begin{figure}[h!]
     \includegraphics[width=\textwidth]{../data/processed/avg_multi}
     \caption{A graph to show the average time each API takes to open 10 connections to a range of domains.}
     \label{fig:multiLatency}

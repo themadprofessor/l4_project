@@ -45,7 +45,6 @@
 
 \usepackage{microtype} % improve typography
 \usepackage{anyfontsize} % allow any size of font
-\usepackage{amsmath,amsfonts,amsbsy,amssymb}
 \usepackage[style]{abstract} % abstract styling
 
 % set bibliography styling

@@ -49,7 +49,7 @@ to allow the API to be dynamically linked.
 Trait objects are Rust's method of dynamic dispatch and pseudo runtime generics.
 All trait objects must be wrapped in \texttt{Box} and marked as \texttt{dyn}, for example
 \texttt{Box<dyn Connection<F>>}, which leads to cluttered code.
-This can be mediated through type alias, so for example if \texttt{type ConnectionObj<F> = Box<dyn Connection<F>>;} was
+This can be mediated through type alias, so for example if \texttt{type ConnectionObj<F> = Box<dyn Connection<F>{}>;} was
 defined, \texttt{ConnectionObj<F>} can be used instead.
 While using trait objects would add a performance overhead due to pointer indirection and dynamic dispatch, the benefit
 of dynamic linking and alternative distribution out ways this.
@@ -355,7 +355,7 @@ An alternative approach is to defined Input an Output as generic types on the \t
 methods respectively.
 This would allow the end user to pass an arbitrary type which implements a trait, which could be specified by the
 implementation.
-Such an approach would make it very difficult to work with header information.
+Such an approach would make it difficult to work with header information.
 For example, a HTTP framer would not be able to return the status code to the end user.
 Associated types mean the implementation can limit the types the end user can use to type which handle such header data.
 These types can contain their own generic parameters, for example a HTTPResponse object could have a generic type for

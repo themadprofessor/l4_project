@@ -37,7 +37,7 @@ BSD Sockets was designed for the Unix operating system, which was implemented in
 was implemented in C and exposed a C API.
 At the time, C was the correct choice for language as it allowed for easy porting to other platforms, and high
 performance.
-C has many weaknesses, such as limited concurrency support, widespread undefined behaviour and a weak type system.
+C's weaknesses include limited concurrency support, widespread undefined behaviour and a weak type system.
 These weaknesses can be seen in the design of BSD Sockets: single-threaded synchronous, integer-based API .
 Using C can lead to a number of bugs which cannot be checked by the compiler.
 For example, a listening socket and a connected socket both have the same type (int), which can lead to misusing a

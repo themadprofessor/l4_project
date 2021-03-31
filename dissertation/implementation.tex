@@ -1,3 +1,10 @@
+In this Chapter we discuss implementation decisions made when implementing the design discussed in
+Chapter~\ref{ch:design}.
+First, we discuss which asynchronous runtime the API should be implemented with.
+Then we discuss the implementation of the connection racing.
+The preconnection state machine which enables compile endpoint checking is discussed next.
+Finally, we discuss how messages are received, which objects are involved and how incomplete messages are handled.
+
 \section{Tokio}\label{sec:tokio}
 Asynchronous programming in Rust requires an asynchronous run-time to poll the futures produced from \texttt{async}
 functions.

@@ -228,3 +228,15 @@
 
 ### 02 Apr 2020
 * *4 hours* Add background on TAPS
+
+### 03 Apr 2020
+* *0.5 hours* Define types early in requirements
+
+### 04 Apr 2020
+* *6 hours* Restructure background and add summary
+
+### 05 Apr 2020
+* *6 hours* Extend evaluation
+
+### 06 Apr 2020
+* *4 hours* Tidy up disseration and do presentation

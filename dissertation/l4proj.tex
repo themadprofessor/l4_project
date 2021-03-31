@@ -41,7 +41,13 @@
     amounts of boilerplate code.
     This projects aims to investigate the possibility of a high-level API which removes the boilerplate
     associated with Berkeley sockets, and provide a protocol-agnostic, asynchronous API to application developers.
+    This resulted in increased performance when multiple connections are created, decreased code complexity and
+    increased compile time safety.
 \end{abstract}
+
+\chapter*{Acknowledgements}
+I would like to thank my supervisor Dr Colin Perkins for providing this interesting project and providing invaluable
+helps and guidence throughout this project.
 
 %==============================================================================
 
@@ -104,11 +110,11 @@ BSD Sockets have become less applicable as the standard API over the years, but 
 BSD Sockets was designed to be a simple API which followed the same structure as local file access APIs.
 While this approach likely contributed to the APIs widespread use and longevity, it does not match the true nature of
 networks.
-File access is a largely synchronous and reliable operation with limited customisation options for how to carry out the
+File access is a synchronous and reliable operation with limited customisation options for how to carry out the
 operation.
 Networking is inherently asynchronous and unreliable in its operation, and operates on a customisable protocol stack.
 While BSD Sockets has been extended over the years to support asynchronous operations with its non-blocking mode, it is
-extremely error prone and cumbersome to use.
+error prone and cumbersome to use.
 BSD Sockets does expose a mechanism to customise the protocol stack, but it requires the user of the API to select which
 protocols to use from a limited range, supported by the operating system.
 
@@ -223,9 +229,67 @@ Finally, Chapter~\ref{ch:conclusion} discusses possible future work on the proje
 
 %==================================================================================================================================
 \chapter{Conclusion}\label{ch:conclusion}
-The aim of this project was to define a modern alternative to the BSD Sockets API .
+The aim of this project was to create a modern alternative to the BSD Sockets API .
 BSD Sockets was defined in the 1980s, and has continued to be the standard networking API, despite it not being fit for
 modern networked programs.
+It fails to represent the true nature of networks and tightly couples programs with the transport protocols used.
+This lead to the creation three major attempts to replace BSD Sockets: Post Sockets, NEAT and TAPS.
+Post Sockets was designed to decouple programs from the transport-layer protocols.
+NEAT was designed to allow transport-layer protocols to be implemented in user-space.
+TAPS was designed to provide a unified API for connections which communicate the same data conceptually.
+The design of the API took inspiration from the core ideas presented by these three attempts.
+This resulted in an API which provides a unified API which decouples programs from transport protocols and provides
+support for user-space transport protocols, implemented in Rust, a modern systems programming language.
+
+The resulting API presented a model which follows a user's high-level understanding of a connection.
+A connection's configuration is specified first, which can be used to either open a new connection or bind a listener
+which listens for connects which match the configuration.
+The configuration allows the user to specify the local and remote machines the resulting connection will be betweeen,
+and the properties of the connection, such as reliability.
+With the connection, the user can then send and receive strongly-typed messages to and from the remote machine.
+
+Two programs written using the API and BSD Sockets results in at least an order of magnitude more code for the BSD
+Sockets based program over the program using the API .
+Since In general shorter programs are easier to understand, which compounded with increased amount of error handling
+code to for the BSD Sockets lead to the program written in the API being easier to understand.
+Furthermore, the API is designed as a higher-level library than BSD Sockets, therefore large amounts of the code in the
+BSD Sockets program was implemented with the API, such as the DNS lookup.
+
+When the time to establish a connection for each API was compared, BSD Sockets was faster with most domains tested.
+The difference was minimal, but was present and was likely due to BSD Sockets being a synchronous API .
+Since the API requires an asynchronous runtime to poll the \texttt{Future}s created by the API, the initialisation
+of the API was longer than BSD Sockets.
+When the same collection of domains was run with similar programs which opened multiple connections for each domain,
+the API was significantly faster than BSD Sockets.
+Since BSD Sockets is a synchronous API, each connection attempt was done seqentially, leading to an overall slower
+program.
+
+\section{Future Work}\label{sec:future-work}
+There are four main areas of future work: supporting more properties of transport protocols, include multiple protocol
+stacks in the connection racing, implementing more framers and splitting the API crate into multiple smaller crates.
+
+The API only ensures the underlying transport protocol upholds the “reliability'' property.
+Other properties defined by TAPS include: preservation of message boundaries and parallel use of multiple paths.
+Supporting these properties would allow for more customisation of the protocols used and provide more possible
+protocols stacks to include in connection races.
+
+The API only races the IP addresses from a DNS lookup, whereas the TAPS specification specifies multiple protocol
+stacks should also be included in the races.
+Possible future work would involve including more transport protocols from the operating system, and including them in
+the protocol racing.
+This would allow for more protocols to be races, increasing their uptake, as well as possible performance improvements.
+
+HTTP is the only framer implemented in the API .
+Possible future would involve implementing more application layer protocols such as FTP and NTP .
+Since the API does not require these protocols to be implemented within the API, new application layer protocols would
+be implemented as separate crates to be distributed separately and the existing HTTP framer would be moved into its
+own crate.
+
+The Tokio-based implementation of the API is within the API crate.
+This should be moved into its own crate, and the API distributed without an implementation in its crate.
+Distributions of the API crate could then include their own default implementation, which can be specialised for the
+target platform.
+
 %Summarise the whole project for a lazy reader who didn't read the rest (e.g. a prize-awarding committee).
 %\section{Guidance}
 %\begin{itemize}
